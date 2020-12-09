@@ -1,0 +1,38 @@
+
+CREATE TABLE {} (
+	[id] [int] NULL,
+	[person_id] [int] NULL,
+	[person_day_id] [int] NULL,
+	[hhno] [int] NULL,
+	[pno] [smallint] NULL,
+	[day] [smallint] NULL,
+	[tour] [smallint] NULL,
+	[jtindex] [smallint] NULL,
+	[parent] [smallint] NULL,
+	[subtrs] [smallint] NULL,
+	[pdpurp] [smallint] NULL,
+	[tlvorig] [smallint] NULL,
+	[tardest] [smallint] NULL,
+	[tlvdest] [smallint] NULL,
+	[tarorig] [smallint] NULL,
+	[toadtyp] [smallint] NULL,
+	[tdadtyp] [smallint] NULL,
+	[topcl] [int] NULL,
+	[totaz] [smallint] NULL,
+	[tdpcl] [int] NULL,
+	[tdtaz] [smallint] NULL,
+	[tmodetp] [smallint] NULL,
+	[tpathtp] [smallint] NULL,
+	[tautotime] [real] NULL,
+	[tautocost] [real] NULL,
+	[tautodist] [real] NULL,
+	[tripsh1] [smallint] NULL,
+	[tripsh2] [smallint] NULL,
+	[phtindx1] [smallint] NULL,
+	[phtindx2] [smallint] NULL,
+	[fhtindx1] [smallint] NULL,
+	[fhtindx2] [smallint] NULL,
+	[toexpfac] [smallint] NULL
+)
+
+
