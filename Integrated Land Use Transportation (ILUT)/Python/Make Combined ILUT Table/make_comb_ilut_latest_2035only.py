@@ -156,7 +156,8 @@ if __name__ == '__main__':
     scen_log_tbl = "ilut_scenario_log" #logs each run made and asks user for scenario description
     
     #sql script directory
-    sql_dir = r"Q:\SACSIM19\Integration Data Summary\SACSIM19 Scripts\SQL\Python SQL"
+    script_dir = os.path.dirname(os.path.realpath(__file__))
+    sql_dir = os.path.join(script_dir, "MakeILUTCombinedTableSQL")
     
     #Tables that aren't scenario-dependent
     master_parcel_table = "mtpuser.PARCEL_MASTER"
