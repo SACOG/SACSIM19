@@ -186,6 +186,7 @@ class BCP():
                   "4 - Make sure you are specifying the correct delimiter type\n" \
                   "5 - If you loaded a TXT file with non-comma delimiters, you need to specify the delimiter type." \
                       "If no delimiter specified, a comma delimiter is assumed.")
+            sys.exit(1)
         
         
         

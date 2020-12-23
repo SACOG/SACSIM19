@@ -126,7 +126,7 @@ if __name__ == '__main__':
                       k_data_start_row: 2,
                       k_load_tbl: load_triptbl},
                      {k_sql_tbl_name: "raw_cveh", 
-                      k_input_file: "cveh_taz.csv", 
+                      k_input_file: "cveh_taz.dbf", 
                       k_sql_qry_file: 'create_cveh_taz.sql',
                       k_data_start_row: 2,
                       k_load_tbl: load_cveh_taztbl},
