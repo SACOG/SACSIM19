@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Spyder Editor
-
-This is a temporary script file.
+__init__.py
+Loads in all necessary modules to use ILUT loader as comprehensive package
 """
 
-from .ILUT2SQL_bcp import ILUT2SQL_bcp
-from .MakeCombinedILUT import MakeCombinedILUT
-from .bcp_loader import bcp_loader
+
+from ILUT import ILUT2SQL_bcp, MakeCombinedILUT
