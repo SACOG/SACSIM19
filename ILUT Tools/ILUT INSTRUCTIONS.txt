@@ -5,3 +5,16 @@ BASIC INSTRUCTIONS
 2 - Open ilut.py script in interpreter (e.g. IDLE, PyCharm)
 3 - Run the script, entering parameters as prompted
 
+SOFTWARE AND PACKAGE REQUIREMENTS:
+    Python dependencies not in python standard library:
+	-pyodbc
+	-dbfread
+    
+    Other Dependencies:
+        -BCP needs to be downloaded as a separate EXE file, obtainable at:
+            https://docs.microsoft.com/en-us/sql/tools/bcp-utility?view=sql-server-ver15
+            
+            BCP is normally a command-line tool. Reference for all of its arguments is
+            available at:
+                https://docs.microsoft.com/en-us/sql/tools/bcp-utility?view=sql-server-ver15
+
