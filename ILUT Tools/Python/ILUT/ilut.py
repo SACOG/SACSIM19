@@ -73,6 +73,28 @@ if __name__ == '__main__':
     load_cveh_taztbl = True
     load_ixxi_taztbl = True
     
+    # population tables
+    pop_y1 = 'raw_Pop2016_latest'
+    pop_y2 = 'raw_pop2027_latest'
+    pop_y3 = 'raw_Pop2035_latest'
+    pop_y4 = 'raw_Pop2040_latest'
+    
+    # envision-tomorrow parcel tables
+    env_tmrw_y1 = 'raw_eto2016_latest'
+    env_tmrw_y2 = 'raw_eto2027_latest'
+    env_tmrw_y3 = 'raw_eto2035_latest'
+    env_tmrw_y4 = 'raw_eto2040_latest'
+    
+    # set envision-tomorrow and population sql tables for given run based on the scenario year
+    yr1 = base_year
+    yr2 = 2027
+    yr3 = 2035
+    yr4 = 2040
+    
+    pop_yr_dict = {yr1:pop_y1, yr2:pop_y2, yr3:pop_y3, yr4:pop_y4}
+    env_tmrw_yr_dict = {yr1:env_tmrw_y1, yr2:env_tmrw_y2, yr3:env_tmrw_y3, yr4:env_tmrw_y4}
+    
+    
     # files to load that need to be converted to CSV
     dbf_cveh_taz = "cveh_taz.dbf"
     csv_cveh_taz = "cveh_taz.csv"
@@ -137,8 +159,25 @@ if __name__ == '__main__':
     # the user can have a "one and done" process, just setting parameters once, hitting "go",
     # and having the full ILUT process happen for them.
     if run_ilut_combine.lower() == 'y':
-        comb_rpt = ILUTReport(sc_yr=scenario_year,
-                 sc_code=scenario_id)
+        eto_tbl = env_tmrw_yr_dict[scenario_year]
+        popn_tbl = pop_yr_dict[scenario_year]
+        comb_rpt = ILUTReport(sc_yr=scenario_year, sc_code=scenario_id, 
+                              envision_tomorrow_tbl=eto_tbl, pop_table=popn_tbl)
+        
+        # make sure population and envision tomorrow tables indicated above actually exist in DB
+        eto_tbl_exists = comb_rpt.check_if_table_exists(eto_tbl)
+        popn_tbl_exists = comb_rpt.check_if_table_exists(popn_tbl)
+        
+        if eto_tbl_exists and popn_tbl_exists:
+            pass
+        else:
+            raise Exception("Envision Tomorrow and population tables not found. " \
+                            "Confirm that the envision tomorrow table and population " \
+                            "table names are spelled correctly and are in SQL Server.")
+        
+    else:
+        pass
+        print("Loading model output tables but will NOT run ILUT combination process...\n")
     
     # change workspace to model run folder
     os.chdir(model_run_folder)
@@ -171,7 +210,7 @@ if __name__ == '__main__':
     print("All tables successfully loaded!\n")
     
     if run_ilut_combine.lower() == 'y':
-        print("Starting ILUT combining/aggregation process...")
+        print("Starting ILUT combining/aggregation process...\n")
         comb_rpt.run_report()
     
 

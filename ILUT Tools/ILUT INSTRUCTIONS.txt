@@ -1,0 +1,7 @@
+01/05/2020:
+
+BASIC INSTRUCTIONS
+1 - Go to ...\ILUT Tools\Python\ILUT
+2 - Open ilut.py script in interpreter (e.g. IDLE, PyCharm)
+3 - Run the script, entering parameters as prompted
+
