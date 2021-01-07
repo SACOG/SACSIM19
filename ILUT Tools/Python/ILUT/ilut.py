@@ -44,6 +44,9 @@ def dat_to_csv(dat_in, out_csv, dat_delim):
 if __name__ == '__main__':
     
     #===============PARAMETERS SET AT EACH RUN========================
+    print("Welcome to the SACSIM Integrated Land Use Transportation (ILUT) processor.\n" \
+          "To run the ILUT process, please follow the prompts below:\n")
+    
     model_run_folder = input("Enter model run folder path: ")# r'D:\SACSIM19\MTP2020\Conformity_Runs\run_2035_MTIP_Amd1_Baseline_v1'
     scenario_year = int(input("Enter scenario year: ")) # 2035
     scenario_id = int(input("Enter scenario ID number: ")) # 999
