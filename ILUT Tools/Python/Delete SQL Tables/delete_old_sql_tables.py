@@ -94,7 +94,7 @@ if __name__ == '__main__':
     drop_table_sql = 'delete_old_tablesSQL.sql'
     
     year = 2035
-    scenario_ids = [999]
+    scenario_ids = [995, 996, 997, 998]
     
     drop_comb = input("Deleting year {}, scenarios {}. Also drop combined output tables too (y/n)? ".format(year,scenario_ids))
     

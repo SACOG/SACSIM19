@@ -125,7 +125,7 @@ class ILUTReport():
             cursor.close()
         conn.close()
         
-    def log_run(self, sc_yr, sc_code, sc_desc, log_table, avtnc_desc):
+    def log_run(self, avtnc_desc):
         '''
         Logs information about the ILUT run performed, including scenario year,
         scenario ID, text description and notes of scenario, when the ILUT for the scenario was run,
@@ -140,7 +140,7 @@ class ILUTReport():
         sc_desc = r'{}'.format(sc_desc) #gets rid of pesky unicode escape errors if description has \N, \t, etc.
         
         sql = "INSERT INTO {3} VALUES ({0}, {1}, '{2}', GETDATE(),'{4}','{5}')" \
-                .format(sc_yr, sc_code, sc_desc, log_table, avtnc_desc,default_tbl_status)
+                .format(self.sc_yr, self.sc_code, self.sc_desc, self.scen_log_tbl, avtnc_desc, default_tbl_status)
         
         cursor.execute(sql)
         
