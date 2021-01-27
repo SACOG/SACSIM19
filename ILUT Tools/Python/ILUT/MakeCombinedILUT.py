@@ -15,6 +15,8 @@ Python Version: 3.x
 import os
 import sys
 import time
+from pathlib import Path
+
 import pyodbc
 
 
@@ -22,7 +24,7 @@ import pyodbc
 #===================================FUNCTIONS================================
 class ILUTReport():
 
-    def __init__(self, envision_tomorrow_tbl=None, pop_table=None, sc_yr=None,
+    def __init__(self, model_run_dir, envision_tomorrow_tbl=None, pop_table=None, sc_yr=None,
                  sc_code=None, av_tnc_type=None, sc_desc=None):
         
         # ========parameters that are unlikely to change or are changed rarely======
@@ -64,33 +66,51 @@ class ILUTReport():
         
         
         # =========parameters that change with every run================= 
+        self.model_run_dir = model_run_dir
+        
+        # if names are pre-entered for parcel and population tables, confirm they
+        # exist in SQL Server. IF they don't, have the user enter the names manually
         if envision_tomorrow_tbl:
-            self.envision_tomorrow_tbl = envision_tomorrow_tbl
+            if self.check_if_table_exists(envision_tomorrow_tbl):
+                self.envision_tomorrow_tbl = envision_tomorrow_tbl
+            else:
+                self.envision_tomorrow_tbl = \
+                    self.conditional_table_entry(f"Parcel/ETO table {self.envision_tomorrow_tbl}" \
+                                                 " not found. Please manually enter name: ")
         else: 
-            self.envision_tomorrow_tbl = self.conditional_table_entry("Enter future parcel/ETO table name")
+            self.envision_tomorrow_tbl = self.conditional_table_entry("Enter future parcel/ETO table name: ")
             
         if pop_table:
-            self.pop_table = pop_table
+            if self.check_if_table_exists(pop_table):
+                self.pop_table = pop_table
+            else:
+                self.pop_table = \
+                    self.conditional_table_entry(f"Population table {self.pop_table}" \
+                                                 " not found. Please manually enter it: ")
         else:
             self.pop_table = self.conditional_table_entry("Copy/paste population table name")  
             
+        # scenario year
         if sc_yr:
             self.sc_yr = sc_yr
         else: 
             self.sc_yr = input("Enter scenario year: ")  
             
+        # scenario ID code
         if sc_code:   
             self.sc_code = sc_code
         else: 
             self.sc_code = input("Enter scenario number: ")   
            
+        # AV/TNC flag
         if av_tnc_type:
             self.av_tnc_type = av_tnc_type
         else: 
             self.av_tnc_type = input("Enter '1' ({}), '2' ({}), or '3' ({}): " \
                             .format(self.avmode_dict[1][0], self.avmode_dict[2][0],
                                     self.avmode_dict[3][0]))
-        
+                
+        # additional scenario description
         if sc_desc:
             self.sc_desc = sc_desc
         else:
@@ -125,7 +145,23 @@ class ILUTReport():
             cursor.close()
         conn.close()
         
-    def log_run(self, avtnc_desc):
+    def get_unc_path(self, in_path):
+        
+        # based on a network drive path, convert the letter to full machine name
+        unc_path = str(Path(in_path).resolve())
+        
+        # if the model run folder is on the machine that this script is getting run on,
+        # the full machine name path must be manually built.
+        if unc_path == in_path:
+            import socket
+            machine = socket.gethostname()
+            drive_letter = os.path.splitdrive(in_path)[0].strip(':')
+            folderpath = os.path.splitdrive(in_path)[1]
+            unc_path = f"\\\\{machine}\\{drive_letter}{folderpath}"
+        
+        return unc_path
+        
+    def log_run(self, av_tnc_flag):
         '''
         Logs information about the ILUT run performed, including scenario year,
         scenario ID, text description and notes of scenario, when the ILUT for the scenario was run,
@@ -135,15 +171,18 @@ class ILUTReport():
         conn = pyodbc.connect(self.conxn_info)
         conn.autocommit = True
         cursor = conn.cursor()
+        
+        sc_desc_fmt = r'{}'.format(self.sc_desc) #gets rid of pesky unicode escape errors if description has \N, \t, etc.
         default_tbl_status = "created"
+        run_folder = self.get_unc_path(self.model_run_dir)
         
-        sc_desc = r'{}'.format(sc_desc) #gets rid of pesky unicode escape errors if description has \N, \t, etc.
-        
-        sql = "INSERT INTO {3} VALUES ({0}, {1}, '{2}', GETDATE(),'{4}','{5}')" \
-                .format(self.sc_yr, self.sc_code, self.sc_desc, self.scen_log_tbl, avtnc_desc, default_tbl_status)
+        sql = f"""
+            INSERT INTO {self.scen_log_tbl} VALUES (
+            {self.sc_yr}, {self.sc_code}, '{sc_desc_fmt}', GETDATE(), 
+            '{av_tnc_flag}', '{default_tbl_status}', '{run_folder}')
+            """
         
         cursor.execute(sql)
-        
         cursor.commit()
         cursor.close()
         conn.close()
@@ -234,7 +273,7 @@ class ILUTReport():
                 self.run_sql(self.comb_sql, comb_params) #run script to combine all theme tables
                 
                 av_tnc_desc = self.avmode_dict[self.av_tnc_type][0]
-                self.log_run(self.sc_yr, self.sc_code, self.sc_desc, self.scen_log_tbl, av_tnc_desc)
+                self.log_run(av_tnc_desc)
             else:
                 print("Not all input ILUT tables exist. Make sure all theme ILUT tables exist then re-run.")
                 sys.exit()
@@ -248,8 +287,14 @@ class ILUTReport():
 
 
 if __name__ == '__main__':
-    report_obj = ILUTReport(envision_tomorrow_tbl='raw_eto2035_latest', pop_table='raw_Pop2035_latest', sc_yr=2035,
-                 sc_code=999, av_tnc_type=1, sc_desc='test to see if full ILUT process loads correctly')
-    report_obj.run_report(create_triptour_table = False)
+    report_obj = ILUTReport(model_run_dir = r'D:\SACSIM19\MTP2020\MTP_Amendment\FixDELCURV\2035_baseline\run_2035_MTIP_Amd1_Baseline_v2',
+        envision_tomorrow_tbl='raw_eto2035_latest', pop_table='raw_Pop2035_latest', sc_yr=2035,
+                 sc_code=212, av_tnc_type=1, 
+                 sc_desc='Uses inputs from 2035_209 with base net updated to reflect minor fixes after 2020 MTIP amendment')
+    report_obj.run_report(create_triptour_table = True,
+                    create_person_table = True,
+                    create_hh_table = True,
+                    create_cvixxi_table = True,
+                    create_comb_table = True)
 
 

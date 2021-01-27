@@ -164,8 +164,9 @@ if __name__ == '__main__':
     if run_ilut_combine.lower() == 'y':
         eto_tbl = env_tmrw_yr_dict[scenario_year]
         popn_tbl = pop_yr_dict[scenario_year]
-        comb_rpt = ILUTReport(sc_yr=scenario_year, sc_code=scenario_id, 
-                              envision_tomorrow_tbl=eto_tbl, pop_table=popn_tbl)
+        comb_rpt = ILUTReport(model_run_dir=model_run_folder, sc_yr=scenario_year, 
+                              sc_code=scenario_id, envision_tomorrow_tbl=eto_tbl,
+                              pop_table=popn_tbl)
         
         # make sure population and envision tomorrow tables indicated above actually exist in DB
         eto_tbl_exists = comb_rpt.check_if_table_exists(eto_tbl)
