@@ -37,8 +37,7 @@ class ILUTReport():
         self.scen_log_tbl = "ilut_scenario_log" #logs each run made and asks user for scenario description
         
         #sql script directory
-        self.script_dir = os.path.dirname(os.path.realpath(__file__))
-        self.sql_dir = os.path.join(self.script_dir, "MakeILUTCombinedTableSQL")
+        self.sql_dir = os.path.abspath("sql_ilut_summary")
         
         #Tables that aren't scenario-dependent
         self.master_parcel_table = "mtpuser.PARCEL_MASTER"

@@ -55,8 +55,7 @@ if __name__ == '__main__':
 
     #=============SELDOM-CHANGED PARAMETERS==========================
     # folder containing query files used to create tables
-    script_dir = os.path.dirname(os.path.realpath(__file__))
-    query_dir = os.path.join(script_dir, "BCP table creation queries")
+    query_dir = os.path.abspath("sql_bcp")
     
     sql_server_name = 'SQL-SVR'
     ilut_db_name = 'MTP2020'
