@@ -28,20 +28,47 @@ arcpy.env.overwriteOutput = True
 
 
 #=============================FUNCTIONS==========================================
-def make_link_node_lists(in_file):
-    try:
-        print("Writing out line and node lists...")
+class LinesNodes:
+    def __init__(in_txt):
+        self.in_txt = in_txt
         
-        aLinkDic = {}
         
-        with open(in_file, 'r') as f_in:
+        self.tf_change = '0'
+        
+        self.f_linename = 'LINE NAME'
+        
+        self.line_attrs = [self.f_linename,'TIMEFAC[1]','TIMEFAC[2]','TIMEFAC[3]',
+                         'TIMEFAC[4]','TIMEFAC[5]','ONEWAY','MODE','OPERATOR',
+                         'COLOR','CIRCULAR','HEADWAY[1]','HEADWAY[2]','HEADWAY[3]',
+                         'HEADWAY[4]','HEADWAY[5]']
+        
+        self.line_attrs_outorder = [self.f_linename,'TIMEFAC[1]','ONEWAY','MODE','OPERATOR',
+                         'COLOR','CIRCULAR','TIMEFAC[1]','TIMEFAC[2]','TIMEFAC[3]',
+                         'TIMEFAC[4]','TIMEFAC[5]','HEADWAY[1]','HEADWAY[2]','HEADWAY[3]',
+                         'HEADWAY[4]','HEADWAY[5]']
+        
+        self.f_node_attrname = 'N' #field name for node id
+        
+        self.f_tf_attrnames = ['TF','TIMEFAC'] # time factor field names
+        
+
+
+    def get_line_attrs(self):  
+        """
+        Generates dictionary of line-level attributes, e.g.:
+            {<line name>: <list of line attributes>}
+
+        """
+        line_dict_out = {}
+        
+        with open(self.in_txt, 'r') as f_in:
             lines = f_in.readlines()
         
             for line in lines:
                 if len(line) != 0: 
                     line = line.strip()
                     if line[0] != ';': #if line is not a cube commented-out line
-                        if re.match('LINE NAME',line): #if it's the start of a new transit line feature
+                        if re.match(self.f_linename, line): #if it's the start of a new transit line feature
                             #line_attrs = ''
                             line_list = line.split(',') #make into comma-delimited list
                             line_name1 = line_list[0].split('=') # 'LINE NAME="AMTRCCB_A"' becomes list ['LINE NAME', '"AMTRCCB_A"']
@@ -51,109 +78,104 @@ def make_link_node_lists(in_file):
                             line_attrs = line_attrs + line
                         else:
                             line_attrs = line_attrs + line
-                            aLinkDic[line_name] = (line_attrs) #dict entry - {NAME:[NAME, TFs, HEADWAYs, node list, etc.]}
-        
-        link_rows = []
-        node_rows = []
-        
-        for LineName in aLinkDic.keys():
-            line_attrs = aLinkDic[LineName]
-            aNodeList = []
-            tfchg_list = [] #list of time factor (TF) changes
-            
-            tf_change = '0'
-            line_level_attrnames = ['LINE NAME','TIMEFAC[1]','TIMEFAC[2]','TIMEFAC[3]',
-                             'TIMEFAC[4]','TIMEFAC[5]','ONEWAY','MODE','OPERATOR',
-                             'COLOR','CIRCULAR','HEADWAY[1]','HEADWAY[2]','HEADWAY[3]',
-                             'HEADWAY[4]','HEADWAY[5]']
-            
-            line_attrs_outorder = ['LINE NAME','TIMEFAC[1]','ONEWAY','MODE','OPERATOR',
-                             'COLOR','CIRCULAR','TIMEFAC[1]','TIMEFAC[2]','TIMEFAC[3]',
-                             'TIMEFAC[4]','TIMEFAC[5]','HEADWAY[1]','HEADWAY[2]','HEADWAY[3]',
-                             'HEADWAY[4]','HEADWAY[5]']
-            
-            node_attrname = 'N'
-            tf_attrnames = ['TF','TIMEFAC']
-            
-            row_dict1 = {}
-            for attr in line_attrs.split(','): #example: ['LINE NAME=LINE1','COLOR=2'...]
-                attr_sp = attr.strip().split('=')
-                
-                if len(attr_sp) > 1:
-                    attr_name = attr_sp[0]
-                    attr_value = attr_sp[1].strip('"')
-                    
-                    if attr_name in line_level_attrnames:
-                        # link_row.append(attr_value)
-                        row_dict1[attr_name] = attr_value
-            
-                    elif attr_name == node_attrname: #for each line, the node values will be made into a list
-                        firstNode = attr_value
-                        aNodeList.append(firstNode)
-                        tfchg_list.append(tf_change) #default aTF value is 0
-                    elif attr_name in tf_attrnames: #if there's a time factor change along the route, set it to that TF value
-                        #we don't want to append TF changes to the node list because they've nothing to do with route geometry???
-                        tf_change = attr_value
-                        tfchg_list.append(tf_change)
-                else:
-                    aNodeList.append(attr_sp[0])
-                    tfchg_list.append(tf_change)
-    
-            # put values into correct order to insert into output gdb; ensure all fields needed for GDB included
-            row_dict2 = {}
-            for attrname in line_level_attrnames:
-                if row_dict1.get(attrname):
-                    row_dict2[attrname] = row_dict1[attrname]
-                else:
-                    row_dict2[attrname] = '0' # value if the key isn't found in input tranline file attribute names
-    
-            linkrow_reordered = []
-            for attr in line_attrs_outorder:
-                if row_dict2.get(attr):
-                    linkrow_reordered.append(row_dict2[attr])
-                else:
-                    linkrow_reordered.append('0')
+                            line_dict_out[line_name] = (line_attrs) #dict entry - {NAME:[NAME, TFs, HEADWAYs, node list, etc.]}
+                            
+        return line_dict_out
 
+    def make_link_node_lists(self, in_file):
+        try:
+            print("Writing out line and node lists...")
             
+            link_dict = get_line_attrs()
+
+            link_rows = []
+            node_rows = []
             
-            # make values into field data types compatible with the feature class created.
-            linkrow_out =[]
-            for idx, i in enumerate(linkrow_reordered):
-                if idx == 0:
-                    linkrow_out.append(i) #but line name is always text, even if it's a number value
-                else:
-                    try:
-                        i = int(i)
-                    except ValueError:
-                        try:
-                            i = float(i)
-                        except ValueError:
-                            pass
-                    finally:
-                        linkrow_out.append(i)
-            
-                    
-            link_rows.append(linkrow_out)
-            
-            # generate node-level table
-            node_seq = 0
-            for node in aNodeList:
-                if node[0] == '-': #if node has negative value, it's not a stop
-                    stop = 'N'
-                    node = node.strip('-') #take minus symbol out of node id
-                else:
-                    stop = 'Y'
-        		
-                node_row = [LineName, node, node_seq, stop, tf_change]
-                node_rows.append(node_row)
-                tf_change = tfchg_list[node_seq]
+            for line_name in link_dict.keys():
+                line_attrs = link_dict[line_name]
+                aNodeList = [] # list of nodes corresponding to the line
+                tfchg_list = [] # list of time factor (TF) changes at each node
                 
-                node_seq += 1 #node order for line (1st, 2nd, etc.)
+                row_dict1 = {}
+                
+                for attr in line_attrs.split(','): #example: ['LINE NAME=LINE1','COLOR=2'...]
+                    attr_sp = attr.strip().split('=')
+                    
+                    if len(attr_sp) > 1:
+                        attr_name = attr_sp[0]
+                        attr_value = attr_sp[1].strip('"')
+                        
+                        if attr_name in self.line_attrs:
+                            # link_row.append(attr_value)
+                            row_dict1[attr_name] = attr_value
+                
+                        elif attr_name == node_attrname: #for each line, the node values will be made into a list
+                            firstNode = attr_value
+                            aNodeList.append(firstNode)
+                            tfchg_list.append(tf_change) #default aTF value is 0
+                        elif attr_name in tf_attrnames: #if there's a time factor change along the route, set it to that TF value
+                            #we don't want to append TF changes to the node list because they've nothing to do with route geometry???
+                            tf_change = attr_value
+                            tfchg_list.append(tf_change)
+                    else:
+                        aNodeList.append(attr_sp[0])
+                        tfchg_list.append(tf_change)
         
-        return link_rows, node_rows
-    except KeyError:
-        print("Key error. The line after {} may not have all of its line-level fields. Please check." \
-              .format(LineName))
+                # put values into correct order to insert into output gdb; ensure all fields needed for GDB included
+                row_dict2 = {}
+                for attrname in line_level_attrnames:
+                    if row_dict1.get(attrname):
+                        row_dict2[attrname] = row_dict1[attrname]
+                    else:
+                        row_dict2[attrname] = '0' # value if the key isn't found in input tranline file attribute names
+        
+                linkrow_reordered = []
+                for attr in line_attrs_outorder:
+                    if row_dict2.get(attr):
+                        linkrow_reordered.append(row_dict2[attr])
+                    else:
+                        linkrow_reordered.append('0')
+    
+                
+                
+                # make values into field data types compatible with the feature class created.
+                linkrow_out =[]
+                for idx, i in enumerate(linkrow_reordered):
+                    if idx == 0:
+                        linkrow_out.append(i) #but line name is always text, even if it's a number value
+                    else:
+                        try:
+                            i = int(i)
+                        except ValueError:
+                            try:
+                                i = float(i)
+                            except ValueError:
+                                pass
+                        finally:
+                            linkrow_out.append(i)
+                
+                        
+                link_rows.append(linkrow_out)
+                
+                # generate node-level table
+                node_seq = 0
+                for node in aNodeList:
+                    if node[0] == '-': #if node has negative value, it's not a stop
+                        stop = 'N'
+                        node = node.strip('-') #take minus symbol out of node id
+                    else:
+                        stop = 'Y'
+            		
+                    node_row = [LineName, node, node_seq, stop, tf_change]
+                    node_rows.append(node_row)
+                    tf_change = tfchg_list[node_seq]
+                    
+                    node_seq += 1 #node order for line (1st, 2nd, etc.)
+            
+            return link_rows, node_rows
+        except KeyError:
+            print("Key error. The line after {} may not have all of its line-level fields. Please check." \
+                  .format(LineName))
 
 def create_link_file(outDir, outLink_tbl, in_link_rows):
     print("writing link table...")
