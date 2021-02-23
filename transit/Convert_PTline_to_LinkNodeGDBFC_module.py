@@ -32,9 +32,6 @@ class LinesNodes:
     def __init__(in_txt):
         self.in_txt = in_txt
         
-        
-        self.tf_change = '0'
-        
         self.f_linename = 'LINE NAME'
         
         self.line_attrs = [self.f_linename,'TIMEFAC[1]','TIMEFAC[2]','TIMEFAC[3]',
@@ -51,6 +48,9 @@ class LinesNodes:
         
         self.f_tf_attrnames = ['TF','TIMEFAC'] # time factor field names
         
+        self.val_stop = 'Y' # value for stop node
+        self.val_notstop = 'N' # not a stop node
+        
 
 
     def get_line_attrs(self):  
@@ -66,7 +66,7 @@ class LinesNodes:
         
             for line in lines:
                 if len(line) != 0: 
-                    line = line.strip()
+                    line = line.strip() # removes any leading or trailing spaces
                     if line[0] != ';': #if line is not a cube commented-out line
                         if re.match(self.f_linename, line): #if it's the start of a new transit line feature
                             #line_attrs = ''
@@ -81,45 +81,79 @@ class LinesNodes:
                             line_dict_out[line_name] = (line_attrs) #dict entry - {NAME:[NAME, TFs, HEADWAYs, node list, etc.]}
                             
         return line_dict_out
+    
+    def make_node_lists(self, line_attrs_str):
+        tf_change = '0' # default value for time factor
+        
+        
+        # example of line_attrs_str: ['LINE NAME=LINE1','COLOR=2'...]
+        line_attrs_list = line_attrs_str.split(',')
+        
+        node_list = [] # list of nodes corresponding to the line
+        tfchg_list = [] # list of time factor (TF) changes at each node, default = 0
+        
+        for attr in line_attrs_list: 
+            attr_sp = attr.strip().split('=') # example: 'LINE NAME=LINE1' becomes ['LINE NAME', 'LINE1']
+            
+            if len(attr_sp) > 1: # if the attribute has a name to it as opposed to just being the value (most nodes don't have attrib names)
+                attr_name = attr_sp[0] # attribute name
+                attr_value = attr_sp[1].strip('"') # value of attribute
+                
+                # non-node line attributes (e.g. line name, color, headways...)
+                if attr_name in self.line_attrs:
+                    row_dict1[attr_name] = attr_value
+        
+                # for each line, the node values will be made into a list
+                elif attr_name == self.f_node_attrname: 
+                    first_node = attr_value
+                    node_list.append(first_node)
+                    tfchg_list.append(tf_change) #default aTF value is 0
+                    
+                # if there's a time factor change along the route, set it to that TF value
+                elif attr_name in self.f_tf_attrnames: 
+                    #we don't want to append TF changes to the node list because they've nothing to do with route geometry???
+                    tf_change = attr_value
+                    tfchg_list.append(tf_change)
+            else: # if the attribute doesn't have a name, then it's a node id
+                node_list.append(attr_sp[0])
+                tfchg_list.append(tf_change)    
+                
+        return (node_list, tfchg_list)
+    
+    def ideal_type(self, in_str):
+        try:
+            re_az = re.compile('.*[a-zA-Z]+.*')
+            re_decimal = re.compile('.*\..*')
+            
+            if re.match(re_az, in_str): # if has letters, is string
+                out = in_str
+            elif re.match(re_decimal, in_str): # if no letter but periods, is float
+                out = float(in_str)
+            else: # if no letter and no periods, then is integer
+                out = int(in_str)
+                
+        except ValueError:
+            out = in_str # if all else fails, output will be same as input (string)
+            
+        return out
 
     def make_link_node_lists(self, in_file):
         try:
             print("Writing out line and node lists...")
             
-            link_dict = get_line_attrs()
+            # {NAME:[NAME, TFs, HEADWAYs, node list, etc.]}
+            lines_dict = get_line_attrs()
 
             link_rows = []
             node_rows = []
-            
-            for line_name in link_dict.keys():
-                line_attrs = link_dict[line_name]
-                aNodeList = [] # list of nodes corresponding to the line
-                tfchg_list = [] # list of time factor (TF) changes at each node
+
+            for line_name in lines_dict.keys():
+                line_attrs = lines_dict[line_name]
+                node_lists = self.make_node_lists(line_attrs)
                 
-                row_dict1 = {}
-                
-                for attr in line_attrs.split(','): #example: ['LINE NAME=LINE1','COLOR=2'...]
-                    attr_sp = attr.strip().split('=')
-                    
-                    if len(attr_sp) > 1:
-                        attr_name = attr_sp[0]
-                        attr_value = attr_sp[1].strip('"')
-                        
-                        if attr_name in self.line_attrs:
-                            # link_row.append(attr_value)
-                            row_dict1[attr_name] = attr_value
-                
-                        elif attr_name == node_attrname: #for each line, the node values will be made into a list
-                            firstNode = attr_value
-                            aNodeList.append(firstNode)
-                            tfchg_list.append(tf_change) #default aTF value is 0
-                        elif attr_name in tf_attrnames: #if there's a time factor change along the route, set it to that TF value
-                            #we don't want to append TF changes to the node list because they've nothing to do with route geometry???
-                            tf_change = attr_value
-                            tfchg_list.append(tf_change)
-                    else:
-                        aNodeList.append(attr_sp[0])
-                        tfchg_list.append(tf_change)
+                node_ids = node_lists[0] # list of all node ids associated with line
+                node_tfs = node_lists[1] # list of all node-level tf values associated with line
+
         
                 # put values into correct order to insert into output gdb; ensure all fields needed for GDB included
                 row_dict2 = {}
@@ -135,47 +169,37 @@ class LinesNodes:
                         linkrow_reordered.append(row_dict2[attr])
                     else:
                         linkrow_reordered.append('0')
-    
-                
-                
+
                 # make values into field data types compatible with the feature class created.
                 linkrow_out =[]
                 for idx, i in enumerate(linkrow_reordered):
                     if idx == 0:
                         linkrow_out.append(i) #but line name is always text, even if it's a number value
-                    else:
-                        try:
-                            i = int(i)
-                        except ValueError:
-                            try:
-                                i = float(i)
-                            except ValueError:
-                                pass
-                        finally:
-                            linkrow_out.append(i)
+                    else: 
+                        ideal_i = self.ideal_type(i)
+                        linkrow_out.append(ideal_i)
                 
                         
-                link_rows.append(linkrow_out)
+                link_rows.append(linkrow_out) # output link_row has line-level route info
                 
                 # generate node-level table
-                node_seq = 0
-                for node in aNodeList:
+                for node_seq, node in enumerate(node_ids):
                     if node[0] == '-': #if node has negative value, it's not a stop
-                        stop = 'N'
+                        stop = self.val_notstop
                         node = node.strip('-') #take minus symbol out of node id
                     else:
-                        stop = 'Y'
+                        stop = self.val_stop
             		
-                    node_row = [LineName, node, node_seq, stop, tf_change]
+                    tf = node_tfs[node_seq]
+                    node_row = [line_name, node, node_seq, stop, tf]
                     node_rows.append(node_row)
-                    tf_change = tfchg_list[node_seq]
-                    
-                    node_seq += 1 #node order for line (1st, 2nd, etc.)
             
-            return link_rows, node_rows
+            return (link_rows, node_rows)
         except KeyError:
             print("Key error. The line after {} may not have all of its line-level fields. Please check." \
                   .format(LineName))
+                
+
 
 def create_link_file(outDir, outLink_tbl, in_link_rows):
     print("writing link table...")
@@ -257,10 +281,13 @@ def create_node_file(outDir, outNode_tbl, in_node_rows, hwynode_dbf):
     arcpy.DeleteField_management(outNodes_wPath, "N")
     arcpy.Delete_management(temp_nodetbl)
     
-    #del nodeCursor
     
 def make_linknode_gdbs(in_file, hwynode_dbf, output_dir, outLink_tbl, outNode_tbl):
-    link_rows, node_rows = make_link_node_lists(in_file)
+    data_rows = make_link_node_lists(in_file)
+    link_rows = data_rows[0]
+    node_rows = data_rows[1]
+    
+    
     create_link_file(output_dir, outLink_tbl, link_rows)
     create_node_file(output_dir, outNode_tbl, node_rows, hwynode_dbf)
     
