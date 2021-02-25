@@ -51,6 +51,10 @@ class LinesNodes:
         self.val_stop = 'Y' # value for stop node
         self.val_notstop = 'N' # not a stop node
         
+        self.data_rows = self.make_link_node_lists(in_txt)
+        self.line_rows = self.data_rows[0] # each row contains line-level data
+        self.node_rows = self.data_rows[1] # each row contains data for each node on each line
+        
 
 
     def get_line_attrs(self):  
@@ -199,7 +203,41 @@ class LinesNodes:
             print("Key error. The line after {} may not have all of its line-level fields. Please check." \
                   .format(LineName))
                 
-
+class textOutput:
+    def __init__(self, in_file):
+        self.in_file = in_file
+        self.data = LinesNodes(self.in_file)
+        
+        self.line_rows = self.data.line_rows
+        self.node_rows = self.data.node_rows
+        
+        self.out_link_fields = 'NAME,TIMEFAC,ONEWAY,MODE,OPERATOR,COLOR,CIRCULAR,' \
+            'TF1,TF2,TF3,TF4,TF5,HEADWAY1,HEADWAY2,HEADWAY3,HEADWAY4,HEADWAY5'+"\n"
+            
+        self.out_node_fields = 'NAME,NODE,SEQ,STOP,TF'+"\n"
+    
+ 
+    def make_txt(self, out_link_txt, out_node_txt):
+        
+        with open(out_link_txt,'w') as f_out_link:
+            f_out_link.write(out_link_fields)
+            for row in self.line_rows:
+                row = ','.join(str(i) for i in row) + '\n'
+                f_out_link.write(row)
+        
+        with open(out_node_txt,'w') as f_out_node:
+            f_out_node.write(self.out_node_fields)
+            for row in self.node_rows:
+                row = ','.join(str(i) for i in row) + '\n'
+                f_out_node.write(row)
+                
+class GISOutput:
+    def __init__(self, in_txt, in_node_dbf):
+        
+        # data from transit line txt file (node-level and line-level rows)
+        self.line_node_data = LinesNodes(in_txt)
+        self.line_rows = self.line_node_data.line_rows
+        self.node_rows = self.line_node_data.node_rows
 
 def create_link_file(outDir, outLink_tbl, in_link_rows):
     print("writing link table...")
@@ -283,11 +321,10 @@ def create_node_file(outDir, outNode_tbl, in_node_rows, hwynode_dbf):
     
     
 def make_linknode_gdbs(in_file, hwynode_dbf, output_dir, outLink_tbl, outNode_tbl):
-    data_rows = make_link_node_lists(in_file)
-    link_rows = data_rows[0]
-    node_rows = data_rows[1]
-    
-    
+    data = LinesNodes(in_file)
+    link_rows = data.line_rows
+    node_rows = data.node_rows
+
     create_link_file(output_dir, outLink_tbl, link_rows)
     create_node_file(output_dir, outNode_tbl, node_rows, hwynode_dbf)
     
@@ -361,25 +398,8 @@ def make_line_fc(outDir, line_tbl, trn_node_tbl, hwynodes_dbf, output_line_fc):
     
 #def make_stop_fc #make SHP/FC of transit model stops
     
-def make_txt(in_file, out_link_txt, out_node_txt):
-    out_link_fields = 'NAME,TIMEFAC,ONEWAY,MODE,OPERATOR,COLOR,CIRCULAR,' \
-    'TF1,TF2,TF3,TF4,TF5,HEADWAY1,HEADWAY2,HEADWAY3,HEADWAY4,HEADWAY5'+"\n"
-    
-    out_node_fields = 'NAME,NODE,SEQ,STOP,TF'+"\n"
-    
-    link_rows, node_rows = make_link_node_lists(in_file)
-    
-    with open(out_link_txt,'w') as f_out_link:
-        f_out_link.write(out_link_fields)
-        for row in link_rows:
-            row = ','.join(str(i) for i in row) + '\n'
-            f_out_link.write(row)
-    
-    with open(out_node_txt,'w') as f_out_node:
-        f_out_node.write(out_node_fields)
-        for row in node_rows:
-            row = ','.join(str(i) for i in row) + '\n'
-            f_out_node.write(row)
+# make separate classes for text output and GIS output types
+
             
 def make_gis(in_file, net_nodes_dbf, output_dir, out_link, out_node, link_fc):
     make_linknode_gdbs(in_file, net_nodes_dbf, output_dir, out_link, out_node)
