@@ -27,10 +27,19 @@ start_time = dt.now()
 def shp2fc_sel_fields(in_shp, field_list, out_temp_fc):
     field_maps = arcpy.FieldMappings()
     
+    in_shp_fields = [f.name for f in arcpy.ListFields(in_shp)]
+    
     for field in field_list:
-        vars()[field] = arcpy.FieldMap() #vars() 
-        vars()[field].addInputField(in_shp, field)
-        field_maps.addFieldMap(vars()[field])
+        
+        try:
+            if field in in_shp_fields:
+                vars()[field] = arcpy.FieldMap() #vars() 
+                vars()[field].addInputField(in_shp, field)
+                field_maps.addFieldMap(vars()[field])
+            else:
+                print(f"'{field}' field is not in the input SHP, so won't be in output either.")
+        except:
+            import pdb; pdb.set_trace()
         
     arcpy.FeatureClassToFeatureClass_conversion(in_shp, workspace, out_temp_fc, "", field_maps)
 
@@ -113,7 +122,9 @@ def spatial_join_1(in_link_pts_fc, in_tmc_fc, combined_link_pts_fc, modl_dirn_fi
         temp_output = "tempLinks_spJoin_{}".format(direcn)
         temp_link_pts_fcs.append(temp_output)
         
-        #select model links in correct direction and capclasses; also make sure street model links don't accidentally snap to freeway TMCs
+        #select model links in correct direction and capclasses; also make sure street model links don't accidentally match to freeway TMCs
+        #NEED SYSTEM FOR IDENTIFYING "DIAGONALS", e.g., if TMC is N and model link is just barely different but tagged as W, still consider them a match.
+        
         if fwy_tf:
             sql_tmcs = "{} = '{}' AND {} IN {}".format(tmc_dir_field, direcn, tmc_class_field, tmc_fwys)
             sql_model_links = "{} IN {} AND {} = '{}'".format(capclass_field, capclasses_fwy, modl_dirn_field, direcn)
@@ -169,10 +180,10 @@ def conflation_process(link_shp_in, tmc_fc_in, output_link_fc, link_angle_field,
     temp_link_pts = "TEMP_modelLinkPoints{}".format(time_stamp)
     temp_link_pts_trimmed = "TEMP_modelLinkPointsTrim{}".format(time_stamp)
     
-    #convert lines to centroid points
+    # make copy of the input model link shp
     arcpy.CopyFeatures_management(link_shp_in, link_fc_in)
     
-    #add cardinal direction data to links
+    #add cardinal direction data to model links
     add_angle_data(link_fc_in, link_angle_field)
     
     #convert model links to points that will be joined to TMCs based on closest distance, capclass, and direction
@@ -222,11 +233,13 @@ if __name__=='__main__':
 
 
     #TMC network parameters
-    tmc_fc_in = "TMCs_2017" #initially TMCs_conflBase_2017_2
-    tmc_year = 2017
+    tmc_fc_in = "TMCs_AllRegn_2018" #initially TMCs_conflBase_2017_2
+    tmc_year = 2018
     #tmc_incl_fields = ["Tmc","RoadNumber","RoadName","Direction","County"] #only used if somehow Transfer Attributes becomes useable.
-    tmc_dir_field = "Direction"
-    tmc_class_field = "F_System"
+    tmc_id_field = 'tmc'
+    tmc_dir_field = 'direction_card' # "Direction"
+    tmc_class_field = 'f_system' # "F_System"
+    tmc_routnum_field = 'route_numb'
     tmc_fwys = (1,2) #based on TMC F_System value. need to specify so arterial model links don't tag to freeway TMCs, and vice-versa
     
     
@@ -234,7 +247,7 @@ if __name__=='__main__':
     join_search_dist_art = "300 Feet" #distance from model link midpoint that spatial join will use to search for matching TMCs.
 
 
-    output_field_list = link_field_list + ['Tmc', 'RoadNumber', 'County', 'Direction', 'F_System']
+    output_field_list = link_field_list + [tmc_id_field, tmc_routnum_field, 'County', tmc_dir_field, tmc_class_field]
     output_link_fc = "model_{}TMC_confl{}".format(tmc_year,time_stamp)
     
     link_shp_in = os.path.join(link_shp_dir, link_shp_in)
@@ -245,11 +258,13 @@ if __name__=='__main__':
     time_elapsed = dt.now() - start_time
     run_time_mins = round(time_elapsed.total_seconds()/60,1)
     
+    # Idea for future feature: have output msg that gives status on conflation (e.g. % of links that conflated)
+    
     print("\nScript successfully completed in {} mins! \n\n" \
           "Be sure to manually inspect conflation and check for errors. In particular: \n" \
           "*Model links whose midpoint is outside the search distance from TMCs \n" \
           "*Model links whose calculated cardinal direction doesn't match TMC direction \n" \
           "*Model links with capacity class of 2, which get counted as freeways even if they are arterials \n" \
-          "*Model links with significantly (>20mph or so) free-flow speed difference from NPMRDS free-flow".format(run_time_mins))
+          "*Model links with significant (>20mph or so) free-flow speed difference from NPMRDS free-flow".format(run_time_mins))
     
     
