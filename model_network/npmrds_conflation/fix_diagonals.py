@@ -8,6 +8,12 @@ Purpose: The main conflation script, conflation_NPMRDS_to_model.py, has trouble
     This script aims to correct those instances by comparing the angles of the TMC and model link
     If the angle is less than X degrees (need to test to see what good threshold is),
     then say they are the same direction even if their N/S/E/W tags do not match.
+    
+    OPTION for speeding stuff up: just select links whose angles are in the "ranges of ambiguity"i.e., the c_angle is:
+        * >40 and <50 (N v. E)
+        * >-140 and <-130 (S v. W)
+        * >-40 and <-30 (S v. E)
+        * >130 and <140 (N v. W)
         
           
 Author: Darren Conly
@@ -19,9 +25,17 @@ Python Version: 3.x
 
 import math
 import json
+from time import perf_counter as perf
 
 import arcpy
+import pandas as pd
+
     
+
+def field_in_fc(fname, fc_to_check):
+    fc_fields = [f.name for f in arcpy.ListFields(fc_to_check)]
+    
+    return fname in fc_fields
 
 def get_nearest_distance(line_geom, pt_geom):
     '''returns distance between a point feature and the point on a line that is 
@@ -56,6 +70,7 @@ def get_nearest_distance(line_geom, pt_geom):
     return mindist
 
 
+
 def fix_diagonals(in_modlink_fc, in_tmc_fc):
     
     sref_modlinks = arcpy.Describe(in_modlink_fc).spatialReference
@@ -78,6 +93,7 @@ def fix_diagonals(in_modlink_fc, in_tmc_fc):
     fld_rte_num = 'route_numb'
     fld_dir = 'direction_card'
     fld_fsys = 'f_system'
+    fld_tmclen = 'miles'
     
     fsys_fwys = (1,2)
     
@@ -96,8 +112,15 @@ def fix_diagonals(in_modlink_fc, in_tmc_fc):
     modlink_ucur_fields = [fld_capc, fld_a_b, fld_cangle_modlink, fld_tmc, fld_rte_num,
                            fld_dir, fld_fsys, fld_geom]
     
+    field_check = [field_in_fc(fname, in_modlink_fc) for fname in modlink_ucur_fields]
+    # import pdb; pdb.set_trace()
+    
+    
     with arcpy.da.UpdateCursor(fl_modlinks, modlink_ucur_fields, sql_diag_modlinks) as ucur:
+        
         for row in ucur:
+            st = perf()
+            
             # Get link direction and road cat
             capc = row[modlink_ucur_fields.index(fld_capc)]
             modlink_angle = row[modlink_ucur_fields.index(fld_cangle_modlink)]
@@ -110,30 +133,37 @@ def fix_diagonals(in_modlink_fc, in_tmc_fc):
             centr_x = modlink_centr.X
             centr_y = modlink_centr.Y
             
+            is_ambiguous_dir =  modlink_angle > 40 and modlink_angle < 50 \
+                                and modlink_angle > -140 and modlink_angle < -130 \
+                                and modlink_angle > -40 and modlink_angle < -30 \
+                                and modlink_angle > 130 and modlink_angle < 140
+            if is_ambiguous_dir: continue
+            
             # Select all TMCs that are within search distance,
             if capc in capcs_fwy:
                 arcpy.SelectLayerByLocation_management(fl_tmcs, "WITHIN_A_DISTANCE", 
                                                        centr_geom, search_dist_fwy,
                                                        "NEW_SELECTION")
                 sql_fwytype = f"{fld_fsys} IN {fsys_fwys}"
-                arcpy.SelectLayerByAttribute_management(fl_tmcs, "SUBSET_SELECTION")
+                arcpy.SelectLayerByAttribute_management(fl_tmcs, "SUBSET_SELECTION", sql_fwytype)
             else:
                 arcpy.SelectLayerByLocation_management(fl_tmcs, "WITHIN_A_DISTANCE", 
                                                        centr_geom, search_dist_art,
                                                        "NEW_SELECTION")
-                sql_fwytype = f"{fld_fsys} NOT IN {fsys_fwys}"
-                arcpy.SelectLayerByAttribute_management(fl_tmcs, "SUBSET_SELECTION")               
+                sql_notfwytype = f"{fld_fsys} NOT IN {fsys_fwys}"
+                arcpy.SelectLayerByAttribute_management(fl_tmcs, "SUBSET_SELECTION", sql_notfwytype)               
                 
                 
                 
             # Then subselect again for TMC that has cardinal angle that is < X degrees different from the model link's angle
             
             tmcs_samedir = [] # list of TMCs that have close direction to the model link being considered.
-            flds_tmc = [fld_tmc, fld_rte_num, fld_dir, fld_fsys, fld_geom]
+            flds_tmc = [fld_tmc, fld_rte_num, fld_dir, fld_fsys, fld_tmclen, fld_geom]
             with arcpy.da.SearchCursor(fl_tmcs, flds_tmc) as cur:
                 for tmcrow in cur:
                     
                     tmc = tmcrow[flds_tmc.index(fld_tmc)]
+                    tmclen = tmcrow[flds_tmc.index(fld_tmclen)]
                     rtnum = tmcrow[flds_tmc.index(fld_rte_num)]
                     tmcdir = tmcrow[flds_tmc.index(fld_dir)]
                     tmc_fsys = tmcrow[flds_tmc.index(fld_fsys)]
@@ -153,31 +183,52 @@ def fix_diagonals(in_modlink_fc, in_tmc_fc):
                     # dist_to_linkcentr2 = get_nearest_distance(tmc_geom, centr_geom)
                     
                     if abs(modlink_angle - tmc_angle) < angle_diff_tol:
-                        tmcs_samedir.append({tmc: dist_to_linkcentr})
+                        tmcs_samedir.append((tmc, tmclen, dist_to_linkcentr))
                     
                     # tmc_info = {fld_tmc: tmc, fld_rte_num: rtnum, fld_dir: tmcdir,
                     #             fld_fsys: tmc_fsys, }
             
-            if len(tmcs_samedir) > 1:
-                import pdb; pdb.set_trace()
-            else: continue
+            # for testing only
+            # if len(tmcs_samedir) > 1:
+            #     import pdb; pdb.set_trace()
+            # else: continue
+        
             # if no TMCs are nearby, same direction, and same road type, then skip and go to the next row in the model link file
             if len(tmcs_samedir) < 1:
                 continue
             
-            # re-run selection on the TMC layer to only fetch TMCs that are nearby, same direction, and same road type
-            tmcs_hi_match = tuple(tmcs_samedir)
-            sql_get_match_tmcs = f"{fld_tmc} IN {tmcs_hi_match}"
-            arcpy.SelectLayerByAttribute_management(fl_tmcs, "NEW_SELECTION", tmcs_hi_match)
             
-            # Then subselect, if necessary, to get the TMC closes to the centroid point
-            # if more than 1 TMC ties for closest, choose the TMC where IsPrimary = 1
-            if int(arcpy.GetCount_management(fl_tmcs)[0]) > 1:
-                   arcpy.Near_analysis(centr_geom, "CLOSEST",
-                                                          "SUBSET_SELECTION",
-                                                          )
+            # make dataframe of TMCs that are nearby, same direction, and same road type
+            df_col_tmc = 'tmc'
+            df_col_tmclen = 'tmcmi' # length of TMC
+            df_col_dist = 'distance' # distance from TMC to the model link centroid
+            
+            # get TMC(s) that are closest to the model link's centroid
+            df_himatch = pd.DataFrame.from_records(tmcs_samedir, columns=[df_col_tmc, df_col_tmclen, df_col_dist])
+            df_himatch = df_himatch.loc[df_himatch[df_col_dist] == df_himatch[df_col_dist].min()]
+            
+            # if more than 1 TMC ties for being closest to the model link centroid, then choose the one with longer length
+            # sometimes you get > 1 because of overlapping TMCs.
+            if df_himatch.shape[0] > 1:
+                df_himatch = df_himatch.loc[df_himatch[df_col_tmclen] == df_himatch[df_col_tmclen].max()]
                 
+            # if still more than 1 TMC ties for being closest, and both TMCs are same length, then raise an error.
+            if df_himatch.shape[0] > 1:
+                tmcs = [i for i in df_himatch[df_col_tmc]]
+                raise Exception(f"TMCs {tmcs} are same length and both match as being the closest to model link {modlink_a_b}." \
+                                f"\nYou must review the GIS layers and figure out which of these TMCs you want to match to the model link.")
+                    
+            # return the TMC id of the TMC that is same direction, same road type, and closest to the centroid of the model link.
+            # this will be the TMC whose info you conflate to the model link.
+            closest_tmc = df_himatch.iloc[0][df_col_tmc]
             
+            # Set the model link's TMC value to be closest_tmc
+            row[modlink_ucur_fields.index(fld_tmc)] = closest_tmc
+            ucur.updateRow(row)
+            
+            elapsed = perf() - st
+            print(f"updated link {modlink_a_b} in {elapsed} seconds")
+
 
             
             
