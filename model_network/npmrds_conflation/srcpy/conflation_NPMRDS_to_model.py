@@ -214,7 +214,7 @@ if __name__=='__main__':
     
     #model network link parameters--get model link as SHP from Cube export
     link_shp_dir = r"Q:\SACSIM19\2020MTP\highway\network update\NetworkGIS\SHP\Link"
-    link_shp_in = "masterSM19ProjCoding_10082020.shp" #must have same projection/CRS as source layer--NEXT STEP IS TO SPECIFY FIELD MAPPINGS
+    link_shp_in = "masterSM19ProjCoding_06182021.shp" #must have same projection/CRS as source layer--NEXT STEP IS TO SPECIFY FIELD MAPPINGS
     node_a_field = "A"
     node_b_field = "B"
     capclass_field = "CAPC17" #in theory, the capclass year should sync with the TMC issue year
