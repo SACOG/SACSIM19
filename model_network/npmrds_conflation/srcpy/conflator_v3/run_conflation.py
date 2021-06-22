@@ -11,7 +11,7 @@ Updated by: <name>
 Copyright:   (c) SACOG
 Python Version: 3.x
 """
-# # %%
+# #%%
 import os
 from datetime import datetime as dt
 
@@ -20,6 +20,7 @@ import pandas as pd
 import segtypes
 from conflation import conflation
 
+# #%%
 if __name__ == '__main__':
     # =============INPUT PARAMETERS=========================
     output_fgdb = r"Q:\SACSIM23\network_update\SACSIM23NetUpdate\SACSIM23NetUpdate.gdb"
@@ -51,21 +52,22 @@ if __name__ == '__main__':
 
     # =============RUN SCRIPT=========================
     start_time = dt.now()
-
-    import pdb; pdb.set_trace()
     stickball_links = segtypes.stickBall(workspace=output_fgdb, fc_in=sacsim_links, fld_func_class=sacsim_capc, funclass_fwys=sacsim_fwys, 
                                         funclass_arts=sacsim_arterials, fld_rdname=sacsim_roadname, extra_fields=[], make_copy_w_projn=True)
     
-    stickball_links.add_angle_data()
+    # stickball_links.add_angle_data()
+    # # %%
     
-
+    print("loading true-shape data...")
     true_shapes = segtypes.trueShape(workspace=output_fgdb, fc_in=trueshp_links, fld_linkid=trueshp_linkid, fld_dir_sign=trueshp_dirn_field,
                                     fld_func_class=trueshp_funcclass, funclass_fwys=trueshp_fwys, funclass_arts=trueshp_arterials, 
-                                    fld_rdname=trueshp_roadnam, link_len=trueshp_len, extra_fields=None)
+                                    fld_rdname=trueshp_roadnam, fld_link_len=trueshp_len, extra_fields=[])
+    print("loaded true-shape data.")
 
-    # # %%
+    # #%%
     conflated = conflation(links_trueshp=true_shapes, links_stickball=stickball_links, workspace=output_fgdb)
 
+    # #%%
     conflated.spatial_join_2()
 
     print("initial conflation complete. Now running supplemental process to fix ambiguous angles...")
@@ -84,3 +86,7 @@ if __name__ == '__main__':
           "*Model links with capacity class of 2, which get counted as freeways even if they are arterials \n" \
           "*Model links with significant (>20mph or so) free-flow speed difference from NPMRDS free-flow".format(run_time_mins))
 
+
+
+
+# %%
