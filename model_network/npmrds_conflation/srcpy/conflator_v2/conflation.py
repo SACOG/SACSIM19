@@ -43,7 +43,7 @@ class conflation:
 
     def build_sql(self, fld_dirn, dirn, fld_funclass, funclasses):
         """ Build sql query to select links based on direction and whether its functional class corresponds to freeway or arterial """
-        sql = "{fld_dirn} = '{dirn}' AND {fld_funclass} IN {funclasses}"
+        sql = f"{fld_dirn} = '{dirn}' AND {fld_funclass} IN {funclasses}"
 
         return sql
 
@@ -70,6 +70,9 @@ class conflation:
                 sql_model_links = self.build_sql(self.links_stickball.fld_c_textdirn, direcn, 
                                         self.links_stickball.fld_func_class, self.links_stickball.funclass_arts) 
             
+            print(sql_tmcs)
+            print(sql_model_links)
+
             arcpy.SelectLayerByAttribute_management(self.links_stickball.fl_link_centroids, "NEW_SELECTION", sql_model_links)
             arcpy.SelectLayerByAttribute_management(self.links_trueshp.fl_in, "NEW_SELECTION", sql_tmcs)
             arcpy.SpatialJoin_analysis(self.links_stickball.fl_link_centroids, self.links_trueshp.fl_in, temp_output, "JOIN_ONE_TO_ONE",

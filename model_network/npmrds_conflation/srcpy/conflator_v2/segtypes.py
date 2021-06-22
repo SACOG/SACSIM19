@@ -47,8 +47,11 @@ class line_segs:
 
 
         # make feature layer from input feature class
-        import pdb; pdb.set_trace()
-        self.fl_in = os.path.splitext(os.path.basename(self.fc_in))[0]
+        # import pdb; pdb.set_trace()
+        fl_in = os.path.splitext(os.path.basename(self.fc_in))[0]
+        self.fl_in = f"fl_{fl_in}"
+
+        if arcpy.Exists(self.fl_in): arcpy.Delete_management(self.fl_in)
         arcpy.MakeFeatureLayer_management(self.fc_in, self.fl_in)
 
 
@@ -110,11 +113,11 @@ class line_segs:
 
 class stickBall(line_segs):
     """class specific to the input stick-ball network"""
-    def __init__(self, workspace, fc_in, fld_func_class=None, funclass_fwys=None, funclass_arts=None, fld_rdname=None, 
+    def __init__(self, workspace, fc_in, fld_func_class, funclass_fwys, funclass_arts, fld_rdname, 
                 extra_fields=[], make_copy_w_projn=True):
 
         # inheriting stuff from parent class
-        super().__init__(fc_in, workspace, fld_func_class=None, funclass_fwys=None, funclass_arts=None,
+        super().__init__(workspace, fc_in, fld_func_class, funclass_fwys, funclass_arts,
                 fld_rdname='NAME') 
         self.fld_anode = 'A'
         self.fld_bnode = 'B'
@@ -128,12 +131,11 @@ class stickBall(line_segs):
         self.fc_link_prj = "TEMP_link_prj" 
         self.fc_link_centroids = "TEMP_link_centroids"
 
-        if make_copy_w_projn:
-            self.make_linkcopy_prj()
+        self.sref = arcpy.SpatialReference(2226)
 
         self.fl_link_prj = f"fl_{self.fc_link_prj}"
-
-        self.sref = arcpy.SpatialReference(2226)
+        if make_copy_w_projn:
+            self.make_linkcopy_prj()
 
         self.make_link_centroids()
 
@@ -148,20 +150,24 @@ class stickBall(line_segs):
         """ Make temporary feature class of points
         representing center point of links """
         #convert model links to points that will be joined to TMCs based on closest distance, capclass, and direction
-        arcpy.FeatureToPoint_management(self.link_fc_prj, self.fc_link_centroids)
+        if arcpy.Exists(self.fc_link_centroids): arcpy.Delete_management(self.fc_link_centroids)
+        arcpy.FeatureToPoint_management(self.fc_link_prj, self.fc_link_centroids)
         self.fl_link_centroids = f"fl_{self.fc_link_centroids}"
+
+        if arcpy.Exists(self.fl_link_centroids): arcpy.Delete_management(self.fl_link_centroids)
         arcpy.MakeFeatureLayer_management(self.fc_link_centroids, self.fl_link_centroids)
 
 
 class trueShape(line_segs):
     """class specific to the input true-shape network"""
-    def __init__(self, workspace, fc_in, fld_linkid, fld_dir_sign, fld_func_class=None, 
-                funclass_fwys=None, funclass_arts=None, fld_rdname=None, link_len=None,
+    def __init__(self, workspace, fc_in, fld_linkid, fld_dir_sign, fld_func_class, 
+                funclass_fwys, funclass_arts, fld_rdname, link_len,
                 extra_fields=None):
          # inheriting stuff from parent class
-        super().__init__(workspace, fc_in, fld_func_class='SACTRAK', funclass_fwys=None, funclass_arts=None,
-                fld_rdname=None)     
+        super().__init__(workspace, fc_in, fld_func_class, funclass_fwys, funclass_arts,
+                fld_rdname)     
 
+        
         self.seg_len = link_len
         self.fld_linkid = fld_linkid # unique ID for each true-shape segment (e.g. TMC code for Inrix files)
         self.fld_dir_sign = fld_dir_sign # field that has signed direction (eg. direction shown on road signs)
@@ -169,16 +175,16 @@ class trueShape(line_segs):
         arcpy.MakeFeatureLayer_management(self.fc_in, self.fl_trueshps)
 
 
-# %%
+
 if __name__ == '__main__':
-    
-    arcpy.env.workspace = r"Q:\SACSIM23\network_update\SACSIM23NetUpdate\SACSIM23NetUpdate.gdb"
-    test_model_lnk = r"Q:\SACSIM19\2020MTP\highway\network update\NetworkGIS\SHP\Link\masterSM19ProjCoding_10022020.shp"
+    pass
+    # arcpy.env.workspace = r"Q:\SACSIM23\network_update\SACSIM23NetUpdate\SACSIM23NetUpdate.gdb"
+    # test_model_lnk = r"Q:\SACSIM19\2020MTP\highway\network update\NetworkGIS\SHP\Link\masterSM19ProjCoding_10022020.shp"
 
     
-    sbt = stickBall(test_model_lnk, extra_fields=['SACTRAK','CAPC20'])
-    print(sbt.make_prj_link())
+    # sbt = stickBall(test_model_lnk, extra_fields=['SACTRAK','CAPC20'])
+    # print(sbt.make_prj_link())
 
 
-    # %%
-    dir(sbt)
+    # # %%
+    # dir(sbt)
