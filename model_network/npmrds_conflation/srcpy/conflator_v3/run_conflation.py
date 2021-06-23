@@ -26,6 +26,8 @@ if __name__ == '__main__':
     output_fgdb = r"Q:\SACSIM23\network_update\SACSIM23NetUpdate\SACSIM23NetUpdate.gdb"
 
     #stick-ball input parameters
+    calc_dirn_data = False # whether to calculate cardinal angles for model links
+
     sacsim_links = r"Q:\SACSIM19\2020MTP\highway\network update\NetworkGIS\SHP\Link\masterSM19ProjCoding_10022020.shp"
     sacsim_capc = 'CAPC20'
     sacsim_fwys = (1, 16) # 1 = mainline freeways; 8 = HOV lanes, 16 = freeway-to-freeway connectors
@@ -34,16 +36,28 @@ if __name__ == '__main__':
     sacsim_roadname = "NAME"
 
 
-    #true-shape input parameters
-    # trueshp_links = r"Q:\SACSIM23\network_update\SACSIM23NetUpdate\SACSIM23NetUpdate.gdb\INRIX_SHP_2020_2021_noRamps"
-    trueshp_links = r"Q:\SACSIM23\network_update\SACSIM23NetUpdate\SACSIM23NetUpdate.gdb\SAMPLE_HERE_Sugar_2019_pubROW_ctype" 
-    trueshp_linkid = 'LINK_ID' # 'Tmc'
+    #true-shape input parameters for INRIX TMC SHP 
+    """ 
+    trueshp_links = r"Q:\SACSIM23\network_update\SACSIM23NetUpdate\SACSIM23NetUpdate.gdb\INRIX_SHP_2020_2021_noRamps"
+    trueshp_linkid = 'Tmc'
     trueshp_dirn_field = 'DirectionAbb'
     trueshp_funcclass = 'FRC'
     trueshp_fwys = (1, 2) 
     trueshp_arterials = (3, 4, 5, 6, 99)
     trueshp_roadnam = "RoadName"
     trueshp_len = 'Miles'
+    """
+
+    # true-shape params for HERE SHP that ships with Sugar data
+    trueshp_links = r"Q:\SACSIM23\network_update\SACSIM23NetUpdate\SACSIM23NetUpdate.gdb\HERE_Sugar_2019_pubROW_ctype_nearSSlinks" 
+    trueshp_linkid = 'LINK_ID'
+    trueshp_dirn_field = None
+    trueshp_funcclass = 'FUNC_CLASS'
+    trueshp_fwys = ('1', '2') 
+    trueshp_arterials = ('3', '4', '5', '6', '99')
+    trueshp_roadnam = "ST_NAME"
+    trueshp_len = 'DISTANCE'
+    extra_fields_trueshp = ['SPD_LIMIT', 'LANES']
 
     # variables not being used, but may be useful in future if making capability to conflate ramps too.
     trueshp_rampflag_col = 'Type'
@@ -54,13 +68,14 @@ if __name__ == '__main__':
     # =============RUN SCRIPT=========================
     start_time = dt.now()
     stickball_links = segtypes.stickBall(workspace=output_fgdb, fc_in=sacsim_links, fld_func_class=sacsim_capc, funclass_fwys=sacsim_fwys, 
-                                        funclass_arts=sacsim_arterials, fld_rdname=sacsim_roadname, extra_fields=[], make_copy_w_projn=True)
+                                        funclass_arts=sacsim_arterials, fld_rdname=sacsim_roadname, extra_fields=[], make_copy_w_projn=True,
+                                        add_dirn_data=calc_dirn_data)
     
     # # %%
     print("loading true-shape data...")
     true_shapes = segtypes.trueShape(workspace=output_fgdb, fc_in=trueshp_links, fld_linkid=trueshp_linkid, fld_dir_sign=trueshp_dirn_field,
                                     fld_func_class=trueshp_funcclass, funclass_fwys=trueshp_fwys, funclass_arts=trueshp_arterials, 
-                                    fld_rdname=trueshp_roadnam, fld_link_len=trueshp_len, extra_fields=[])
+                                    fld_rdname=trueshp_roadnam, fld_link_len=trueshp_len, extra_fields=extra_fields_trueshp)
     print("loaded true-shape data.")
 
     # #%%

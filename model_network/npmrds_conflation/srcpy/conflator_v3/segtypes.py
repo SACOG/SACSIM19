@@ -114,7 +114,7 @@ class line_segs:
 class stickBall(line_segs):
     """class specific to the input stick-ball network"""
     def __init__(self, workspace, fc_in, fld_func_class, funclass_fwys, funclass_arts, fld_rdname, 
-                extra_fields=[], make_copy_w_projn=True):
+                extra_fields=[], make_copy_w_projn=True, add_dirn_data=True):
 
         # inheriting stuff from parent class
         super().__init__(workspace, fc_in, fld_func_class, funclass_fwys, funclass_arts,
@@ -133,7 +133,8 @@ class stickBall(line_segs):
         self.fc_link_centroids = "TEMP_link_centroids"
 
         # add angle data to stick-ball links
-        self.add_angle_data()
+        if add_dirn_data:
+            self.add_angle_data()
 
         self.sref = arcpy.SpatialReference(2226)
 
@@ -190,6 +191,11 @@ class trueShape(line_segs):
 
         if arcpy.Exists(self.fl_trueshps): arcpy.Delete_management(self.fl_trueshps)
         arcpy.MakeFeatureLayer_management(self.fc_in, self.fl_trueshps)
+
+        # if no directional data supplied with true-shape, then add it based on cardinal angle
+        if self.fld_dir_sign is None:
+            self.add_angle_data()
+            self.fld_dir_sign = self.fld_c_textdirn
 
 
 

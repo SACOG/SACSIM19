@@ -68,6 +68,8 @@ class conflation:
                 sql_model_links = self.build_sql(self.links_stickball.fld_c_textdirn, direcn, 
                                         self.links_stickball.fld_func_class, self.links_stickball.funclass_arts) 
 
+            # import pdb; pdb.set_trace()
+
             arcpy.SelectLayerByAttribute_management(self.links_stickball.fl_link_centroids, "NEW_SELECTION", sql_model_links)
             arcpy.SelectLayerByAttribute_management(self.links_trueshp.fl_in, "NEW_SELECTION", sql_trueshps)
             arcpy.SpatialJoin_analysis(self.links_stickball.fl_link_centroids, self.links_trueshp.fl_in, temp_output, "JOIN_ONE_TO_ONE",
@@ -153,6 +155,7 @@ class conflation:
         
         st = perf()
         link_cnt = 0 # counter for how many links get data added to them
+        links_to_process = arcpy.GetCount_management(self.fl_output_final)
         with arcpy.da.UpdateCursor(self.fl_output_final, modlink_ucur_fields, sql_taggable_sblinks) as ucur:
             
             for row in ucur:
@@ -245,7 +248,9 @@ class conflation:
                 ucur.updateRow(row)
 
                 link_cnt += 1
-                # print(f"updated link {modlink_a_b} in {elapsed} seconds")
+
+                if link_cnt % 1000 == 0:
+                    print(f"\t{link_cnt} of {links_to_process} leftover links tagged with true-shape data")
         elapsed = round((perf() - st) / 60, 2)
         print(f"successfully added true-shape data to {link_cnt} links with ambiguous directions (e.g. NE) in {elapsed} mins." \
             f"\nOutput feature class is {self.fc_output_final}")
