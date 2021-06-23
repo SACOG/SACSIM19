@@ -258,8 +258,11 @@ class conflation:
 
     def conflation_cleanup(self):
         """ Clean out unneeded feature classes """
-        stuff_to_delete = []
-        pass
+        stuff_to_delete = [self.links_stickball.fc_link_centroids, self.links_stickball.fc_link_prj,
+                            ]
+        print(f"Deleting temp files {stuff_to_delete}...")
+        for fc in stuff_to_delete:
+            arcpy.Delete_management(fc)
 
 
     def conflation_summary(self):

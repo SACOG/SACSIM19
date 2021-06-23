@@ -35,8 +35,9 @@ if __name__ == '__main__':
 
 
     #true-shape input parameters
-    trueshp_links = r"Q:\SACSIM23\network_update\SACSIM23NetUpdate\SACSIM23NetUpdate.gdb\INRIX_SHP_2020_2021_noRamps"
-    trueshp_linkid = 'Tmc'
+    # trueshp_links = r"Q:\SACSIM23\network_update\SACSIM23NetUpdate\SACSIM23NetUpdate.gdb\INRIX_SHP_2020_2021_noRamps"
+    trueshp_links = r"Q:\SACSIM23\network_update\SACSIM23NetUpdate\SACSIM23NetUpdate.gdb\SAMPLE_HERE_Sugar_2019_pubROW_ctype" 
+    trueshp_linkid = 'LINK_ID' # 'Tmc'
     trueshp_dirn_field = 'DirectionAbb'
     trueshp_funcclass = 'FRC'
     trueshp_fwys = (1, 2) 
@@ -56,7 +57,6 @@ if __name__ == '__main__':
                                         funclass_arts=sacsim_arterials, fld_rdname=sacsim_roadname, extra_fields=[], make_copy_w_projn=True)
     
     # # %%
-    
     print("loading true-shape data...")
     true_shapes = segtypes.trueShape(workspace=output_fgdb, fc_in=trueshp_links, fld_linkid=trueshp_linkid, fld_dir_sign=trueshp_dirn_field,
                                     fld_func_class=trueshp_funcclass, funclass_fwys=trueshp_fwys, funclass_arts=trueshp_arterials, 
@@ -71,7 +71,7 @@ if __name__ == '__main__':
 
     print("initial conflation complete. Now running supplemental process to fix ambiguous angles...")
     conflated.fix_diagonals()
-
+    conflated.conflation_cleanup()
     conflated.conflation_summary()
 
 
