@@ -33,8 +33,8 @@ class conflation:
 
         self.outputph1_fc_fields = self.links_stickball.usefields
         self.sufx_tstamp = str(dt.datetime.now().strftime('%Y%m%d'))
-        self.fc_output_ph1 = f'conflation_sticktrue_{self.sufx_tstamp}' # name of final output
-        self.fl_output_ph1 = f'fl_{self.fc_output_ph1}'
+        self.fc_output_final = f'conflation_sticktrue_{self.sufx_tstamp}' # name of final output
+        self.fl_output_final = f'fl_{self.fc_output_final}'
 
     def build_sql(self, fld_dirn, dirn, fld_funclass, funclasses):
         """ Build sql query to select links based on direction and whether its functional class corresponds to freeway or arterial """
@@ -109,7 +109,7 @@ class conflation:
         # after joining TMC attributes from stickball centroids to stickball links, export stickball links with selected fields rather than all fields.
         trimmed_out_fields = self.links_stickball.usefields + self.links_trueshp.usefields
         # temp_out_fields = [f.name for f in arcpy.ListFields(output_fc_pretrim) if f.name != 'Shape']
-        utils.shp2fc_sel_fields(self.workspace, output_fc_pretrim, trimmed_out_fields, self.fc_output_ph1)
+        utils.shp2fc_sel_fields(self.workspace, output_fc_pretrim, trimmed_out_fields, self.fc_output_final)
         
         
         for i in [combined_linkpts_fwy, combined_linkpts_art, combined_linkpts_all, output_fc_pretrim]:
@@ -118,27 +118,31 @@ class conflation:
     def fix_diagonals(self):
         """ Initial conflated stick-ball network is lacking conflated data where the link is
         'between direction', e.g. NE, SW, etc.
-        This function will identify and correct those segments. """
+        This function will identify and correct those segments by checking direction based on cardinal angle, rather
+        than by coarser N/S/E/W flag.
+        
+        This process is meant to run AFTER doing flag-based tagging, because it is significantly slower and we want to limit how
+        many rows it must run on. Takes about 0.4sec per row."""
 
-        print("filling in data for ambiguous angles (45s)")
+        print("filling in data for ambiguous angles")
 
         angle_diff_tol = 10 # maximum number of degrees by which two links can differ to be considered going in same direction
-        taggable_capclasses = self.links_stickball.funclass_fwys + self.links_stickball.funclass_arts
+        self.taggable_capclasses = self.links_stickball.funclass_fwys + self.links_stickball.funclass_arts
 
         # make feature layer from phase-1 output (output of spatial_join_2) so you can select and stuff with it.
-        if arcpy.Exists(self.fl_output_ph1): arcpy.Delete_management(self.fl_output_ph1)
-        arcpy.MakeFeatureLayer_management(self.fc_output_ph1, self.fl_output_ph1)
+        if arcpy.Exists(self.fl_output_final): arcpy.Delete_management(self.fl_output_final)
+        arcpy.MakeFeatureLayer_management(self.fc_output_final, self.fl_output_final)
         
         # Select all model links, that have stick-ball func classes that should've been tagged with true-shape data but weren't
-        sql_diag_modlinks = f"{self.links_trueshp.fld_linkid} IS NULL AND {self.links_stickball.fld_func_class} IN {taggable_capclasses}"
-        arcpy.SelectLayerByAttribute_management(self.fl_output_ph1, "NEW_SELECTION", sql_diag_modlinks)
+        sql_taggable_sblinks = f"{self.links_trueshp.fld_linkid} IS NULL AND {self.links_stickball.fld_func_class} IN {self.taggable_capclasses}"
+        arcpy.SelectLayerByAttribute_management(self.fl_output_final, "NEW_SELECTION", sql_taggable_sblinks)
         
         
         modlink_ucur_fields = [self.links_stickball.fld_func_class, self.links_stickball.fld_join,
                                 self.links_stickball.fld_c_angle, self.links_trueshp.fld_linkid]
         
         # return list of true/false flags indicating if each of the fields is in the output feature class from spatial_join_2()
-        missing_fields = [fname for fname in modlink_ucur_fields if not utils.field_in_fc(fname, self.fl_output_ph1)]
+        missing_fields = [fname for fname in modlink_ucur_fields if not utils.field_in_fc(fname, self.fl_output_final)]
 
         if len(missing_fields) > 0:
             raise Exception(f"following fields are missing from the stick-ball layer: {missing_fields}")
@@ -149,12 +153,9 @@ class conflation:
         
         st = perf()
         link_cnt = 0 # counter for how many links get data added to them
-        with arcpy.da.UpdateCursor(self.fl_output_ph1, modlink_ucur_fields, sql_diag_modlinks) as ucur:
+        with arcpy.da.UpdateCursor(self.fl_output_final, modlink_ucur_fields, sql_taggable_sblinks) as ucur:
             
             for row in ucur:
-                
-                
-                
                 # Get link direction and road cat
                 capc = row[modlink_ucur_fields.index(self.links_stickball.fld_func_class)]
                 modlink_angle = row[modlink_ucur_fields.index(self.links_stickball.fld_c_angle)]
@@ -165,14 +166,15 @@ class conflation:
                 modlink_centr = modlink_geom.centroid
                 centr_geom = arcpy.Geometry('point', modlink_centr, self.links_stickball.sref) # need to convert to geometry to allow select-by-location
 
+                # FROM VERSION 2 AND TRYING TO OMIT IN VERSION 3
                 # check if the direction of the link is ambiguous (e.g. between north and east, between south and west, etc.)
                 # must not near 45 degrees (NW) and not near -135 degrees (SW) and not near -45 degrees (SE) and not near 135 degrees (NE)
-                not_ambiguous_dir = (modlink_angle < 40 or modlink_angle > 50) \
-                                    and (modlink_angle < -140 or modlink_angle > -130) \
-                                    and (modlink_angle < -50 or modlink_angle > -40) \
-                                    and (modlink_angle < 130 or modlink_angle > 140) 
+                # not_ambiguous_dir = (modlink_angle < 40 or modlink_angle > 50) \
+                #                     and (modlink_angle < -140 or modlink_angle > -130) \
+                #                     and (modlink_angle < -50 or modlink_angle > -40) \
+                #                     and (modlink_angle < 130 or modlink_angle > 140) 
                 
-                if not_ambiguous_dir: continue # consdier NOT limiting the filling in to "ambiguous" directions and check ALL links without TMC data
+                # if not_ambiguous_dir: continue # FOR CONFLATOR VERSION 3 consdier NOT limiting the filling in to "ambiguous" directions and check ALL links without TMC data
 
                 # Select all true shapes that are within search distance of stickball link's centroid,
                 if capc in self.links_stickball.funclass_fwys: # if the stickball link is a freeway link, select all freeway true shapes within distance
@@ -241,17 +243,47 @@ class conflation:
                 # Set the model link's TMC value to be closest_trueshp
                 row[modlink_ucur_fields.index(self.links_trueshp.fld_linkid)] = closest_trueshp
                 ucur.updateRow(row)
-                
-                
 
                 link_cnt += 1
                 # print(f"updated link {modlink_a_b} in {elapsed} seconds")
         elapsed = round((perf() - st) / 60, 2)
         print(f"successfully added true-shape data to {link_cnt} links with ambiguous directions (e.g. NE) in {elapsed} mins." \
-            f"\nOutput feature class is {self.fc_output_ph1}")
+            f"\nOutput feature class is {self.fc_output_final}")
+
+    def conflate_curvy_sections(self):
+        """ Placeholder method for conflating where there is a stick-ball link that is not going the same direction
+        as a true shape but should still be tagged to it, because the true-shap is curvy and the stick-ball link
+        only traverses part of the curve (e.g. parts along River Rd. south of Sacramento). """
+        pass
 
     def conflation_cleanup(self):
+        """ Clean out unneeded feature classes """
         stuff_to_delete = []
         pass
+
+
+    def conflation_summary(self):
+        output_location = self.workspace
+        total_links = int(arcpy.GetCount_management(self.fl_output_final)[0])
+
+        sql_tot_taggable_links = f"{self.links_stickball.fld_func_class} IN {self.taggable_capclasses}"
+        sql_tagged_links = f"{self.links_trueshp.fld_linkid} IS NOT NULL AND {self.links_stickball.fld_func_class} IN {self.taggable_capclasses}"
+
+        arcpy.SelectLayerByAttribute_management(self.fl_output_final, "NEW_SELECTION", sql_tot_taggable_links)
+        taggable_links = int(arcpy.GetCount_management(self.fl_output_final)[0])
+
+        arcpy.SelectLayerByAttribute_management(self.fl_output_final, "SUBSET_SELECTION", sql_tagged_links)
+        tagged_links = int(arcpy.GetCount_management(self.fl_output_final)[0])
+
+        summary_msg = f"""
+        OUTPUT SUMMARY:\n
+        * Output file location: {output_location}
+        * Output feature class name: {self.fc_output_final}
+        * Total stick-ball network links in output: {total_links}
+        * Stick-ball network links eligible for true-shape tag (i.e., real roads): {taggable_links}
+        * Stick-ball network links with true-shape data tagged to them: {tagged_links}
+        """
+
+        print(summary_msg)
 
     

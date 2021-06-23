@@ -55,7 +55,6 @@ if __name__ == '__main__':
     stickball_links = segtypes.stickBall(workspace=output_fgdb, fc_in=sacsim_links, fld_func_class=sacsim_capc, funclass_fwys=sacsim_fwys, 
                                         funclass_arts=sacsim_arterials, fld_rdname=sacsim_roadname, extra_fields=[], make_copy_w_projn=True)
     
-    # stickball_links.add_angle_data()
     # # %%
     
     print("loading true-shape data...")
@@ -73,18 +72,24 @@ if __name__ == '__main__':
     print("initial conflation complete. Now running supplemental process to fix ambiguous angles...")
     conflated.fix_diagonals()
 
+    conflated.conflation_summary()
+
 
     time_elapsed = dt.now() - start_time
     run_time_mins = round(time_elapsed.total_seconds()/60,1)
     
     # Idea for future feature: have output msg that gives status on conflation (e.g. % of links that conflated)
     
-    print("\nScript successfully completed in {} mins! \n\n" \
-          "Be sure to manually inspect conflation and check for errors. In particular: \n" \
-          "*Model links whose midpoint is outside the search distance from TMCs \n" \
-          "*Model links whose calculated cardinal direction doesn't match TMC direction \n" \
-          "*Model links with capacity class of 2, which get counted as freeways even if they are arterials \n" \
-          "*Model links with significant (>20mph or so) free-flow speed difference from NPMRDS free-flow".format(run_time_mins))
+    print("""
+        \nScript successfully completed in {} mins! \n\n
+          Be sure to manually inspect conflation and check for errors. In particular: \n
+          *Model links whose midpoint is outside the search distance from TMCs \n
+          *Model links whose calculated cardinal direction doesn't match TMC direction \n
+          *Model links with capacity class of 2, which get counted as freeways even if they are arterials \n
+          *Model links with significant (>20mph or so) free-flow speed difference from NPMRDS free-flow
+          *This script did NOT consider conflation for RAMPS or HOV facilities. These will need to be conflated manually.
+
+          """.format(run_time_mins))
 
 
 
