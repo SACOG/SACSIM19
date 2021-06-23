@@ -36,13 +36,19 @@ class conflation:
         self.fc_output_final = f'conflation_sticktrue_{self.sufx_tstamp}' # name of final output
         self.fl_output_final = f'fl_{self.fc_output_final}'
 
+
+        # road types
+        self.fwys = 'freeways'
+        self.arterials = 'arterials'
+        self.ramps = 'ramps'
+
     def build_sql(self, fld_dirn, dirn, fld_funclass, funclasses):
         """ Build sql query to select links based on direction and whether its functional class corresponds to freeway or arterial """
         sql = f"{fld_dirn} = '{dirn}' AND {fld_funclass} IN {funclasses}"
 
         return sql
 
-    def spatial_join_1(self, combined_link_pts_fc, fwy_tf, join_search_dist):
+    def spatial_join_1(self, combined_link_pts_fc, road_type, join_search_dist):
     
         temp_link_pts_fcs = []
         
@@ -57,16 +63,20 @@ class conflation:
             #select model links in correct direction and capclasses; also make sure street model links don't accidentally match to freeway TMCs
             #NEED SYSTEM FOR IDENTIFYING "DIAGONALS", e.g., if TMC is N and model link is just barely different but tagged as W, still consider them a match.
             
-            if fwy_tf:
+            if road_type == self.fwys:
                 sql_trueshps = self.build_sql(self.links_trueshp.fld_dir_sign, direcn, 
                                         self.links_trueshp.fld_func_class, self.links_trueshp.funclass_fwys)
                 sql_model_links = self.build_sql(self.links_stickball.fld_c_textdirn, direcn, 
                                         self.links_stickball.fld_func_class, self.links_stickball.funclass_fwys)
-            else:
+            elif road_type == self.arterials:
                 sql_trueshps = self.build_sql(self.links_trueshp.fld_dir_sign, direcn, 
                                         self.links_trueshp.fld_func_class, self.links_trueshp.funclass_arts)
                 sql_model_links = self.build_sql(self.links_stickball.fld_c_textdirn, direcn, 
                                         self.links_stickball.fld_func_class, self.links_stickball.funclass_arts) 
+            elif road_type == self.ramps:
+                pass # need to add decision point for handling ramps. Would be good to get conflation at least for on ramps, if not freeway ramps as well.
+            else:
+                pass
 
             # import pdb; pdb.set_trace()
 
@@ -93,10 +103,10 @@ class conflation:
             if arcpy.Exists(lyr): arcpy.Delete_management(lyr)
         
         print("spatial joining for freeways...")
-        self.spatial_join_1(combined_linkpts_fwy, fwy_tf=True, join_search_dist=self.searchdist_fwy)
+        self.spatial_join_1(combined_linkpts_fwy, road_type=self.fwys, join_search_dist=self.searchdist_fwy)
         
         print("spatial joining for arterials...")
-        self.spatial_join_1(combined_linkpts_art, fwy_tf=False, join_search_dist=self.searchdist_art)
+        self.spatial_join_1(combined_linkpts_art, road_type=self.arterials, join_search_dist=self.searchdist_art)
         
         print("combining outputs...")
         arcpy.Merge_management([combined_linkpts_fwy, combined_linkpts_art], combined_linkpts_all)
@@ -271,7 +281,8 @@ class conflation:
 
 
     def conflation_summary(self):
-        output_location = self.workspace
+        """ Provide user with printed summary of outputs """
+        arcpy.SelectLayerByAttribute_management(self.fl_output_final, "CLEAR_SELECTION")
         total_links = int(arcpy.GetCount_management(self.fl_output_final)[0])
 
         sql_tot_taggable_links = f"{self.links_stickball.fld_func_class} IN {self.taggable_capclasses}"
@@ -283,13 +294,16 @@ class conflation:
         arcpy.SelectLayerByAttribute_management(self.fl_output_final, "SUBSET_SELECTION", sql_tagged_links)
         tagged_links = int(arcpy.GetCount_management(self.fl_output_final)[0])
 
+        pct_tagged = round((tagged_links / taggable_links) * 100)
+
         summary_msg = f"""
         OUTPUT SUMMARY:\n
-        * Output file location: {output_location}
+        * Output file location: {self.workspace}
         * Output feature class name: {self.fc_output_final}
         * Total stick-ball network links in output: {total_links}
         * Stick-ball network links eligible for true-shape tag (i.e., real roads): {taggable_links}
-        * Stick-ball network links with true-shape data tagged to them: {tagged_links}
+        * Stick-ball network links with true-shape data tagged to them: {tagged_links} 
+        * Share of taggable links tagged: {pct_tagged}%
         """
 
         print(summary_msg)

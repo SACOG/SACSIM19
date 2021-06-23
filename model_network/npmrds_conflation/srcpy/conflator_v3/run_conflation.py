@@ -30,7 +30,7 @@ if __name__ == '__main__':
 
     sacsim_links = r"Q:\SACSIM19\2020MTP\highway\network update\NetworkGIS\SHP\Link\masterSM19ProjCoding_10022020.shp"
     sacsim_capc = 'CAPC20'
-    sacsim_fwys = (1, 16) # 1 = mainline freeways; 8 = HOV lanes, 16 = freeway-to-freeway connectors
+    sacsim_fwys = (1, 16) # 1 = mainline freeways; 8 = HOV lanes, 16 = freeway-to-freeway connectors--though these arguably should be ramps
     sacsim_arterials = (2, 3, 4, 5, 12, 22, 24)
     sacsim_ramps = (6) # arterial-to-freeway on-off ramps
     sacsim_roadname = "NAME"
@@ -46,10 +46,14 @@ if __name__ == '__main__':
     trueshp_arterials = (3, 4, 5, 6, 99)
     trueshp_roadnam = "RoadName"
     trueshp_len = 'Miles'
+
+    # variables not being used, but may be useful in future if making capability to conflate ramps too.
+    trueshp_rampflag_col = 'Type'
+    trueshp_rampflag_val = 'P4.0' # links with this Type value are ramps (both street-freeway and freeway-freeway ramps)
     """
 
     # true-shape params for HERE SHP that ships with Sugar data
-    trueshp_links = r"Q:\SACSIM23\network_update\SACSIM23NetUpdate\SACSIM23NetUpdate.gdb\HERE_Sugar_2019_pubROW_ctype_nearSSlinks" 
+    trueshp_links = r"Q:\SACSIM23\network_update\SACSIM23NetUpdate\SACSIM23NetUpdate.gdb\HERE_Sugar_2019_pubROW_ctype_nearSSlinksNoRamp" 
     trueshp_linkid = 'LINK_ID'
     trueshp_dirn_field = None
     trueshp_funcclass = 'FUNC_CLASS'
@@ -59,9 +63,10 @@ if __name__ == '__main__':
     trueshp_len = 'DISTANCE'
     extra_fields_trueshp = ['SPD_LIMIT', 'LANES']
 
-    # variables not being used, but may be useful in future if making capability to conflate ramps too.
-    trueshp_rampflag_col = 'Type'
-    trueshp_rampflag_val = 'P4.0' # links with this Type value are ramps (both street-freeway and freeway-freeway ramps)
+    trueshp_rampflag_col = 'RAMP'
+    trueshp_rampflag_val = 'Y' # links with this Type value are ramps (both street-freeway and freeway-freeway ramps)
+    
+
 
 
 
