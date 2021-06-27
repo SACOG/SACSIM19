@@ -30,9 +30,10 @@ class conflation:
         self.direcn_list = ["N","S","E","W"]
         self.searchdist_fwy = "500 Feet" #distance from model link midpoint that spatial join will use to search for matching TMCs.
         self.searchdist_art = "300 Feet" #distance from model link midpoint that spatial join will use to search for matching TMCs.
+        self.taggable_capclasses = self.links_stickball.funclass_fwys + self.links_stickball.funclass_arts
 
         self.outputph1_fc_fields = self.links_stickball.usefields
-        self.sufx_tstamp = str(dt.datetime.now().strftime('%Y%m%d'))
+        self.sufx_tstamp = str(dt.datetime.now().strftime('%Y%m%d_%H%M'))
         self.fc_output_final = f'conflation_sticktrue_{self.sufx_tstamp}' # name of final output
         self.fl_output_final = f'fl_{self.fc_output_final}'
 
@@ -114,10 +115,8 @@ class conflation:
         print("spatial joining for arterials...")
         self.spatial_join_1(combined_linkpts_art, road_type=self.arterials, join_search_dist=self.searchdist_art)
         
-        print("combining outputs...")
+        print("finalizing initial conflation process...")
         arcpy.Merge_management([combined_linkpts_fwy, combined_linkpts_art], combined_linkpts_all)
-        
-        print("joining with links...")
         
         arcpy.AddJoin_management(self.links_stickball.fl_link_prj, self.links_stickball.fld_join, 
                                 combined_linkpts_all, self.links_stickball.fld_join)
@@ -142,10 +141,9 @@ class conflation:
         This process is meant to run AFTER doing flag-based tagging, because it is significantly slower and we want to limit how
         many rows it must run on. Takes about 0.4sec per row."""
 
-        print("filling in data for ambiguous angles")
+        print("performing supplemental conflation process with wider search radius and for ambiguous directions...")
 
         angle_diff_tol = 10 # maximum number of degrees by which two links can differ to be considered going in same direction
-        self.taggable_capclasses = self.links_stickball.funclass_fwys + self.links_stickball.funclass_arts
 
         # make feature layer from phase-1 output (output of spatial_join_2) so you can select and stuff with it.
         if arcpy.Exists(self.fl_output_final): arcpy.Delete_management(self.fl_output_final)
@@ -184,16 +182,6 @@ class conflation:
                 # Get the centroid of the model link
                 modlink_centr = modlink_geom.centroid
                 centr_geom = arcpy.Geometry('point', modlink_centr, self.links_stickball.sref) # need to convert to geometry to allow select-by-location
-
-                # FROM VERSION 2 AND TRYING TO OMIT IN VERSION 3
-                # check if the direction of the link is ambiguous (e.g. between north and east, between south and west, etc.)
-                # must not near 45 degrees (NW) and not near -135 degrees (SW) and not near -45 degrees (SE) and not near 135 degrees (NE)
-                # not_ambiguous_dir = (modlink_angle < 40 or modlink_angle > 50) \
-                #                     and (modlink_angle < -140 or modlink_angle > -130) \
-                #                     and (modlink_angle < -50 or modlink_angle > -40) \
-                #                     and (modlink_angle < 130 or modlink_angle > 140) 
-                
-                # if not_ambiguous_dir: continue # FOR CONFLATOR VERSION 3 consdier NOT limiting the filling in to "ambiguous" directions and check ALL links without TMC data
 
                 # Select all true shapes that are within search distance of stickball link's centroid,
                 if capc in self.links_stickball.funclass_fwys: # if the stickball link is a freeway link, select all freeway true shapes within distance
@@ -288,6 +276,11 @@ class conflation:
 
     def conflation_summary(self):
         """ Provide user with printed summary of outputs """
+
+        import pdb; pdb.set_trace()
+        if arcpy.Exists(self.fl_output_final) is False:
+            arcpy.MakeFeatureLayer_management(self.fc_output_final, self.fl_output_final)
+
         arcpy.SelectLayerByAttribute_management(self.fl_output_final, "CLEAR_SELECTION")
         total_links = int(arcpy.GetCount_management(self.fl_output_final)[0])
 

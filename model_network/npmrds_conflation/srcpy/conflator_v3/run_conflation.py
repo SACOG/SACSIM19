@@ -87,14 +87,12 @@ if __name__ == '__main__':
                                     fld_rdname=trueshp_roadnam, fld_link_len=trueshp_len, extra_fields=extra_fields_trueshp)
     print("loaded true-shape data.")
 
-    # #%%
     conflated = conflation(links_trueshp=true_shapes, links_stickball=stickball_links, workspace=output_fgdb)
 
-    # #%%
     conflated.spatial_join_2()
 
     print("initial conflation complete. Now running supplemental process to fix ambiguous angles...")
-    conflated.fix_diagonals()
+    # conflated.fix_diagonals()
     conflated.conflation_cleanup()
     conflated.conflation_summary()
 
@@ -105,17 +103,17 @@ if __name__ == '__main__':
     # Idea for future feature: have output msg that gives status on conflation (e.g. % of links that conflated)
     
     print(f"""
-        \nScript successfully completed in {} mins! \n\n
+        \nScript successfully completed in {run_time_mins} mins! \n\n
         {conflated.summary_msg}
 
-        \t*Be sure to manually inspect conflation and check for errors. In particular: \n
+        *Be sure to manually inspect conflation and check for errors. In particular: \n
         \t*Model links whose midpoint is outside the search distance from TMCs \n
         \t*Model links whose calculated cardinal direction doesn't match TMC direction \n
         \t*Model links with capacity class of 2, which get counted as freeways even if they are arterials \n
         \t*Model links with significant (>20mph or so) free-flow speed difference from NPMRDS free-flow
         \t*This script did NOT consider conflation for RAMPS or HOV facilities. These will need to be conflated manually.
 
-          """.format(run_time_mins))
+          """)
 
 
 
