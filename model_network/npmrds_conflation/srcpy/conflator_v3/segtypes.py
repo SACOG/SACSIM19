@@ -28,10 +28,10 @@ def field_exists(fc, fieldname):
     else:
         return False
 
-class line_segs:
+class lineSegs:
     """General class for all input line types"""
-    def __init__(self, workspace, fc_in, fld_func_class=None, funclass_fwys=None, 
-                funclass_arts=None, fld_rdname=None):
+    def __init__(self, workspace=None, fc_in=None, fld_func_class=None, funclass_fwys=None, 
+                funclass_arts=None, fld_rdname=None, extra_fields=[]):
         self.fc_in = fc_in # file path for input feature class
         self.workspace = workspace
         arcpy.env.workspace = workspace
@@ -39,8 +39,10 @@ class line_segs:
         self.fld_rdname = fld_rdname # field for road name
 
         self.fld_func_class = fld_func_class # field for functional class, used to define fwy vs. arterial
-        self.funclass_fwys = funclass_fwys # func classes corresponding to freeways
-        self.funclass_arts = funclass_arts # func classes corresponding to arterials
+        self.funclass_fwys = tuple(funclass_fwys) # func classes corresponding to freeways; need to tuple-ize for SQL syntax
+        self.funclass_arts = tuple(funclass_arts) # func classes corresponding to arterials; need to tuple-ize for SQL syntax
+
+        self.extra_fields = extra_fields
 
         self.fld_c_angle = "c_angle" # field for cardinal angle in degrees
         self.fld_c_textdirn = "c_textdirn" # field for cardinal angle as N/S/E/W string
@@ -111,21 +113,21 @@ class line_segs:
 
 
 
-class stickBall(line_segs):
+class stickBall(lineSegs):
     """class specific to the input stick-ball network"""
-    def __init__(self, workspace, fc_in, fld_func_class, funclass_fwys, funclass_arts, fld_rdname, 
-                extra_fields=[], make_copy_w_projn=True, add_dirn_data=True):
+    def __init__(self, make_copy_w_projn=True, 
+                add_dirn_data=True, **lineseg_args):
 
         # inheriting stuff from parent class
-        super().__init__(workspace, fc_in, fld_func_class, funclass_fwys, funclass_arts,
-                fld_rdname='NAME') 
+        super().__init__(**lineseg_args)
+
         self.fld_anode = 'A'
         self.fld_bnode = 'B'
         self.fld_join = 'A_B' # used for joining link centroids back to link lines
         
         self.usefields = [self.fld_anode, self.fld_bnode, self.fld_join,
                         self.fld_func_class, self.fld_rdname, self.fld_c_angle, 
-                        self.fld_c_textdirn] + extra_fields
+                        self.fld_c_textdirn] + self.extra_fields
 
         # will be copy of input link file, but projected to specified CRS
         # Needed because Cube NET files usually don't have projection
@@ -169,23 +171,21 @@ class stickBall(line_segs):
         arcpy.MakeFeatureLayer_management(self.fc_link_centroids, self.fl_link_centroids)
 
 
-class trueShape(line_segs):
+class trueShape(lineSegs):
     """class specific to the input true-shape network"""
-    def __init__(self, workspace, fc_in, fld_linkid, fld_dir_sign, fld_func_class, 
-                funclass_fwys, funclass_arts, fld_rdname, fld_link_len,
-                extra_fields=None):
+    def __init__(self, fld_linkid=None, fld_dir_sign=None, 
+                fld_link_len=None, **lineseg_args):
+
          # inheriting stuff from parent class
-        super().__init__(workspace, fc_in, fld_func_class, funclass_fwys, funclass_arts,
-                fld_rdname)     
+        super().__init__(**lineseg_args)  
         
         self.fld_seg_len = fld_link_len
         self.fld_linkid = fld_linkid # unique ID for each true-shape segment (e.g. TMC code for Inrix files)
         self.fld_dir_sign = fld_dir_sign # field that has signed direction (eg. direction shown on road signs)
-        self.fld_rdname = fld_rdname
-        self.fld_func_class = fld_func_class
 
-        self.usefields = [self.fld_linkid, self.fld_rdname, self.fld_func_class, self.fld_dir_sign,
-        self.fld_seg_len] + extra_fields
+        self.usefields = [self.fld_linkid, self.fld_rdname, self.fld_func_class, 
+        self.fld_dir_sign, self.fld_seg_len] \
+            + self.extra_fields
 
         self.fl_trueshps = f"fl_trueshps"
 
@@ -203,11 +203,17 @@ if __name__ == '__main__':
     pass
     # arcpy.env.workspace = r"Q:\SACSIM23\network_update\SACSIM23NetUpdate\SACSIM23NetUpdate.gdb"
     # test_model_lnk = r"Q:\SACSIM19\2020MTP\highway\network update\NetworkGIS\SHP\Link\masterSM19ProjCoding_10022020.shp"
-
+    # test_trueshapes = r'Q:\SACSIM23\network_update\SACSIM23NetUpdate\SACSIM23NetUpdate.gdb\HERE_Sugar_2019_pubROW_ctype_nearSSlinksNoRamp'
     
-    # sbt = stickBall(test_model_lnk, extra_fields=['SACTRAK','CAPC20'])
-    # print(sbt.make_prj_link())
+    # sbt = stickBall(workspace=arcpy.env.workspace, fc_in=test_model_lnk, fld_func_class='CAPC20',
+    #     funclass_fwys=(1), extra_fields=['SACTRAK'])
+
+    # tst = trueShape(workspace=arcpy.env.workspace, fc_in=test_trueshapes, fld_func_class='FRC',
+    #     funclass_fwys=(1, 2), extra_fields=['ST_NAME', 'SPD_LIMIT'], fld_link_len='DISTANCE',
+    #     fld_dir_sign=)
+
+    # import pdb; pdb.set_trace()
 
 
-    # # %%
-    # dir(sbt)
+    # %%
+    dir(sbt)

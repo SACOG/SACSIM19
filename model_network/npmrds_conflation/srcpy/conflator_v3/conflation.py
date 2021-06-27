@@ -44,6 +44,12 @@ class conflation:
 
     def build_sql(self, fld_dirn, dirn, fld_funclass, funclasses):
         """ Build sql query to select links based on direction and whether its functional class corresponds to freeway or arterial """
+        
+        # if only one funclass, reformat tuple to be string. E.g., convert (1,) to be (1) so SQL IN clause works
+        if len(funclasses) == 1:
+            funclass = funclasses[0]
+            funclasses = f"({funclass})"
+        
         sql = f"{fld_dirn} = '{dirn}' AND {fld_funclass} IN {funclasses}"
 
         return sql
@@ -296,16 +302,14 @@ class conflation:
 
         pct_tagged = round((tagged_links / taggable_links) * 100)
 
-        summary_msg = f"""
+        self.summary_msg = f"""
         OUTPUT SUMMARY:\n
-        * Output file location: {self.workspace}
-        * Output feature class name: {self.fc_output_final}
-        * Total stick-ball network links in output: {total_links}
-        * Stick-ball network links eligible for true-shape tag (i.e., real roads): {taggable_links}
-        * Stick-ball network links with true-shape data tagged to them: {tagged_links} 
-        * Share of taggable links tagged: {pct_tagged}%
+        \t* Output file location: {self.workspace}
+        \t* Output feature class name: {self.fc_output_final}
+        \t* Total stick-ball network links in output: {total_links}
+        \t* Stick-ball network links eligible for true-shape tag (i.e., real roads): {taggable_links}
+        \t* Stick-ball network links with true-shape data tagged to them: {tagged_links} 
+        \t* Share of taggable links tagged: {pct_tagged}%
         """
-
-        print(summary_msg)
 
     
