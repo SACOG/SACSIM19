@@ -11,6 +11,7 @@ Python Version: 3.x
 """
 from time import perf_counter as perf
 import datetime as dt
+import re
 
 import pandas as pd
 import arcpy
@@ -30,6 +31,8 @@ class conflation:
         self.direcn_list = ["N","S","E","W"]
         self.searchdist_fwy = "500 Feet" #distance from model link midpoint that spatial join will use to search for matching TMCs.
         self.searchdist_art = "300 Feet" #distance from model link midpoint that spatial join will use to search for matching TMCs.
+        self.fld_searchdist = "Cf_SrchDistFt" # field indicating conflation search distance used.
+        
         self.taggable_capclasses = self.links_stickball.funclass_fwys + self.links_stickball.funclass_arts
 
         self.outputph1_fc_fields = self.links_stickball.usefields
@@ -54,6 +57,8 @@ class conflation:
         sql = f"{fld_dirn} = '{dirn}' AND {fld_funclass} IN {funclasses}"
 
         return sql
+
+
 
     def spatial_join_1(self, combined_link_pts_fc, road_type, join_search_dist):
     
@@ -84,13 +89,16 @@ class conflation:
                 pass # need to add decision point for handling ramps. Would be good to get conflation at least for on ramps, if not freeway ramps as well.
             else:
                 pass
-
-            # import pdb; pdb.set_trace()
-
+            
             arcpy.SelectLayerByAttribute_management(self.links_stickball.fl_link_centroids, "NEW_SELECTION", sql_model_links)
             arcpy.SelectLayerByAttribute_management(self.links_trueshp.fl_in, "NEW_SELECTION", sql_trueshps)
             arcpy.SpatialJoin_analysis(self.links_stickball.fl_link_centroids, self.links_trueshp.fl_in, temp_output, "JOIN_ONE_TO_ONE",
                                     "KEEP_ALL","","CLOSEST", join_search_dist)
+
+            # add field indicating the search distance used for spatial join
+            searchdist_int = int(re.match('\d+', join_search_dist).group(0)) # convert to int to save space
+            arcpy.AddField_management(temp_output, self.fld_searchdist, "LONG")
+            utils.set_field_value(temp_output, self.fld_searchdist, searchdist_int)
             
         arcpy.Merge_management(temp_link_pts_fcs, combined_link_pts_fc)
 
@@ -125,14 +133,14 @@ class conflation:
 
         # after joining TMC attributes from stickball centroids to stickball links, export stickball links with selected fields rather than all fields.
         trimmed_out_fields = self.links_stickball.usefields + self.links_trueshp.usefields
+        trimmed_out_fields.append(self.fld_searchdist)
         # temp_out_fields = [f.name for f in arcpy.ListFields(output_fc_pretrim) if f.name != 'Shape']
         utils.shp2fc_sel_fields(self.workspace, output_fc_pretrim, trimmed_out_fields, self.fc_output_final)
-        
         
         for i in [combined_linkpts_fwy, combined_linkpts_art, combined_linkpts_all, output_fc_pretrim]:
             arcpy.Delete_management(i)
 
-    def fix_diagonals(self):
+    def fix_diagonals(self, cust_srchdst_fwy=None, cust_srchdst_art=None):
         """ Initial conflated stick-ball network is lacking conflated data where the link is
         'between direction', e.g. NE, SW, etc.
         This function will identify and correct those segments by checking direction based on cardinal angle, rather
@@ -141,7 +149,13 @@ class conflation:
         This process is meant to run AFTER doing flag-based tagging, because it is significantly slower and we want to limit how
         many rows it must run on. Takes about 0.4sec per row."""
 
-        print("performing supplemental conflation process with wider search radius and for ambiguous directions...")
+        # default search distances
+        if cust_srchdst_fwy is None: cust_srchdst_fwy = self.searchdist_fwy
+        if cust_srchdst_art is None: cust_srchdst_art = self.searchdist_art
+        
+
+        print(f"performing supplemental conflation process with search distance of {cust_srchdst_fwy} for freeways" \
+            f" and {cust_srchdst_art} for arterials...")
 
         angle_diff_tol = 10 # maximum number of degrees by which two links can differ to be considered going in same direction
 
@@ -155,7 +169,8 @@ class conflation:
         
         
         modlink_ucur_fields = [self.links_stickball.fld_func_class, self.links_stickball.fld_join,
-                                self.links_stickball.fld_c_angle, self.links_trueshp.fld_linkid]
+                                self.links_stickball.fld_c_angle, self.links_trueshp.fld_linkid, 
+                                self.fld_searchdist]
         
         # return list of true/false flags indicating if each of the fields is in the output feature class from spatial_join_2()
         missing_fields = [fname for fname in modlink_ucur_fields if not utils.field_in_fc(fname, self.fl_output_final)]
@@ -186,22 +201,26 @@ class conflation:
                 # Select all true shapes that are within search distance of stickball link's centroid,
                 if capc in self.links_stickball.funclass_fwys: # if the stickball link is a freeway link, select all freeway true shapes within distance
                     arcpy.SelectLayerByLocation_management(self.links_trueshp.fl_trueshps, "WITHIN_A_DISTANCE", 
-                                                        centr_geom, self.searchdist_fwy,
+                                                        centr_geom, cust_srchdst_fwy,
                                                         "NEW_SELECTION")
                     sql_fwytype = f"{self.links_trueshp.fld_func_class} IN {self.links_trueshp.funclass_fwys}"
                     arcpy.SelectLayerByAttribute_management(self.links_trueshp.fl_trueshps, "SUBSET_SELECTION", sql_fwytype)
+                    searchdist_int = int(re.match('\d+', cust_srchdst_fwy).group(0))
                 elif capc in self.links_stickball.funclass_arts:
                     arcpy.SelectLayerByLocation_management(self.links_trueshp.fl_trueshps, "WITHIN_A_DISTANCE", 
-                                                        centr_geom, self.searchdist_art,
+                                                        centr_geom, cust_srchdst_art,
                                                         "NEW_SELECTION")
                     sql_notfwytype = f"{self.links_trueshp.fld_func_class} IN {self.links_trueshp.funclass_arts}"
-                    arcpy.SelectLayerByAttribute_management(self.links_trueshp.fl_trueshps, "SUBSET_SELECTION", sql_notfwytype)    
+                    arcpy.SelectLayerByAttribute_management(self.links_trueshp.fl_trueshps, "SUBSET_SELECTION", sql_notfwytype)   
+                    searchdist_int = int(re.match('\d+', cust_srchdst_art).group(0)) 
                 else:
                     continue # if the stickball link's func class (capclass for model links) is not a freeway or arterial, then we don't want to conflate.
-                            # So move on to next link           
+                            # So move on to next link    
+                            # 
+                # Set the value for the search distance field to show what the search distance was for this row
+                row[modlink_ucur_fields.index(self.fld_searchdist)] = searchdist_int      
                     
                 # Then subselect again for TMC that has cardinal angle that is < X degrees different from the model link's angle
-                
                 trueshp_samedir = [] # list of TMCs that have close direction to the model link being considered.
                 flds_trueshp = [self.links_trueshp.fld_linkid, self.links_trueshp.fld_rdname, self.links_trueshp.fld_dir_sign, 
                             self.links_trueshp.fld_func_class, self.links_trueshp.fld_seg_len, fld_geom]
@@ -255,9 +274,10 @@ class conflation:
 
                 if link_cnt % 1000 == 0:
                     print(f"\t{link_cnt} of {links_to_process} leftover links tagged with true-shape data")
+
         elapsed = round((perf() - st) / 60, 2)
-        print(f"successfully added true-shape data to {link_cnt} links with ambiguous directions (e.g. NE) in {elapsed} mins." \
-            f"\nOutput feature class is {self.fc_output_final}")
+        print(f"\tSupplemental process successfully added true-shape data to {link_cnt} " \
+            f"additional links in {elapsed} mins.")
 
     def conflate_curvy_sections(self):
         """ Placeholder method for conflating where there is a stick-ball link that is not going the same direction
@@ -277,7 +297,6 @@ class conflation:
     def conflation_summary(self):
         """ Provide user with printed summary of outputs """
 
-        import pdb; pdb.set_trace()
         if arcpy.Exists(self.fl_output_final) is False:
             arcpy.MakeFeatureLayer_management(self.fc_output_final, self.fl_output_final)
 

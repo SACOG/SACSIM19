@@ -92,10 +92,11 @@ if __name__ == '__main__':
     conflated.spatial_join_2()
 
     print("initial conflation complete. Now running supplemental process to fix ambiguous angles...")
-    # conflated.fix_diagonals()
+    conflated.fix_diagonals() # first run with standard search distances
+    conflated.fix_diagonals(cust_srchdst_fwy="1000 Feet", cust_srchdst_art="600 Feet") # then re-run with wider search distances
+    
     conflated.conflation_cleanup()
     conflated.conflation_summary()
-
 
     time_elapsed = dt.now() - start_time
     run_time_mins = round(time_elapsed.total_seconds()/60,1)
@@ -108,8 +109,7 @@ if __name__ == '__main__':
 
         *Be sure to manually inspect conflation and check for errors. In particular: \n
         \t*Model links whose midpoint is outside the search distance from TMCs \n
-        \t*Model links whose calculated cardinal direction doesn't match TMC direction \n
-        \t*Model links with capacity class of 2, which get counted as freeways even if they are arterials \n
+        \t*Model links whose search distance (Cf_SrchDist_ft field) is beyond the normal 300ft/500ft distances
         \t*Model links with significant (>20mph or so) free-flow speed difference from NPMRDS free-flow
         \t*This script did NOT consider conflation for RAMPS or HOV facilities. These will need to be conflated manually.
 

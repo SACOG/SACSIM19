@@ -63,3 +63,10 @@ def get_angle(in_line_geom):
     ydiff = end_lat - start_lat
     link_angle = math.degrees(math.atan2(ydiff, xdiff))
     return link_angle
+
+# in feature layer fl, set field to value set_val
+def set_field_value(fl, field, set_val, srch_qry=None):
+    with arcpy.da.UpdateCursor(fl, field, srch_qry) as ucur:
+        for row in ucur:
+            row[0] = set_val
+            ucur.updateRow(row)
