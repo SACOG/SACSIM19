@@ -28,12 +28,13 @@ if __name__ == '__main__':
     #stick-ball input parameters
     calc_dirn_data = False # whether to calculate cardinal angles for model links
 
-    sacsim_links = r"Q:\SACSIM19\2020MTP\highway\network update\NetworkGIS\SHP\Link\masterSM19ProjCoding_10022020.shp"
-    sacsim_capc = 'CAPC20'
+    sacsim_links = r"D:\SACSIM19\MTP2020\2016_UpdatedAug2020\run_2016_baseline_AO13_V7_NetUpdate08202020\AssnOnlyTesting_CubeGIS\SHP\2016_base.shp" # r"Q:\SACSIM19\2020MTP\highway\network update\NetworkGIS\SHP\Link\masterSM19ProjCoding_10022020.shp"
+    sacsim_capc = 'CAPCLASS' # 'CAPC20'
     sacsim_fwys = [1] # 1 = mainline freeways; 8 = HOV lanes, 16 = freeway-to-freeway connectors--though these arguably should be ramps
     sacsim_arterials = [2, 3, 4, 5, 12, 22, 24]
     sacsim_ramps = [6] # arterial-to-freeway on-off ramps
     sacsim_roadname = "NAME"
+    stickball_xtraflds = []
 
 
     #true-shape input parameters for INRIX TMC SHP 
@@ -77,7 +78,7 @@ if __name__ == '__main__':
 
     print("loading stick-ball data...")
     stickball_links = segtypes.stickBall(workspace=output_fgdb, fc_in=sacsim_links, fld_func_class=sacsim_capc, funclass_fwys=sacsim_fwys, 
-                                        funclass_arts=sacsim_arterials, fld_rdname=sacsim_roadname, extra_fields=[], make_copy_w_projn=True,
+                                        funclass_arts=sacsim_arterials, fld_rdname=sacsim_roadname, extra_fields=stickball_xtraflds, make_copy_w_projn=True,
                                         add_dirn_data=calc_dirn_data)
     
     # # %%

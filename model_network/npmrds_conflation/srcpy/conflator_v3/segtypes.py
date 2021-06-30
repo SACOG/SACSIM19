@@ -129,6 +129,8 @@ class stickBall(lineSegs):
                         self.fld_func_class, self.fld_rdname, self.fld_c_angle, 
                         self.fld_c_textdirn] + self.extra_fields
 
+        self.sref = arcpy.SpatialReference(2226) # output will have spatial reference of SACOG region
+
         # will be copy of input link file, but projected to specified CRS
         # Needed because Cube NET files usually don't have projection
         self.fc_link_prj = "TEMP_link_prj" 
@@ -138,14 +140,36 @@ class stickBall(lineSegs):
         if add_dirn_data:
             self.add_angle_data()
 
-        self.sref = arcpy.SpatialReference(2226)
-
+        
+        self.make_ab_joinfield() # if it doesn't exist, add A_B join field to enable joining between copies of link file based on concatenated A_B 
         
         if make_copy_w_projn:
             self.make_linkcopy_prj()
             
 
         self.make_link_centroids()
+
+    
+    def make_ab_joinfield(self):
+        """ Checks if there's a join field, based on concatenating A and B nodes.
+        If there is not, it adds one. 
+        CONSIDER making this happen no matter what, since sometimes the A_B field will have duplicate values
+        if user does not run field calculation in Cube
+         """
+        link_fields = [f.name for f in arcpy.ListFields(self.fc_in)]
+        # import pdb;pdb.set_trace()
+        if self.fld_join not in link_fields:
+            print(f"{self.fld_join} does not exist, so it's being added to enable joining...")
+            
+            arcpy.AddField_management(self.fc_in, self.fld_join, "TEXT")
+            with arcpy.da.UpdateCursor(self.fc_in, [self.fld_anode, self.fld_bnode, self.fld_join]) as ucur:
+                for row in ucur:
+                    anode = row[0]
+                    bnode = row[1]
+                    jnkey = f"{anode}_{bnode}"
+
+                    row[2] = jnkey
+                    ucur.updateRow(row)
 
     def make_linkcopy_prj(self):
         """ Make make temporary copy of input links with desired fields using a projection,
