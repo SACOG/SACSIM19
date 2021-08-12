@@ -3,7 +3,7 @@
 ; 	
 ;Created 9/15/2020 -Kyle Shipley
 ;Last update: 8/11/2021 - KS
-; -adjusted speed bin code
+; -adjusted speed bin code and speed for t0 input
 ; -updated TDF TC[] to match full model
 ; -adjusted min speed bin value
 /*
@@ -140,7 +140,6 @@ LOOP p=1,9
 	  ; Previous volume and time
 	  prevvol  = v_1
 	  prevtime = time_1
-	  precspd = cspd_1
 
 	  ;drop previous loading variables (need to add as many excludes as there are)
 	  NETO=vi.@per@.net, exclude=v_1,time_1,cspd_1,vc_1,vdt_1,vht_1,vt_1,
@@ -192,7 +191,7 @@ LOOP p=1,9
 	  CostPerMile = @auto_cost_per_mile@   ;from configuration file
 
 	PHASE=LINKREAD                        ;define link groups
-	  SPEED = li.precspd
+	  SPEED = li.speed
 	  t0 = li.distance * 60 / CmpNumRetNum(SPEED,'=',0,1,SPEED)
 	  t1 = li.prevtime
 	  
@@ -922,8 +921,6 @@ linko=?daynet_SZ_PjtVMT.dbf format=dbf
     TOT_VMT_PJT = (VMTII_PJT+VMTIX_PJT+VMTXI_PJT)
 
     ;split speeds into bins
-    CSPD_Agrp=0
-
 	DYCSPD_A = 0
 	DYTOT_V = 0
 	DYSVT_II = 0
@@ -938,7 +935,7 @@ linko=?daynet_SZ_PjtVMT.dbf format=dbf
 	DYVMTII_PJT = 0
 	DYVMTIX_PJT = 0
 	DYVMTXI_PJT = 0
-	DYVCSPD_Agrp = 0
+	DYCSPD_Agrp = 0
 
 	AM3CSPD_A = (li.1.CSPD_A + li.2.CSPD_A + li.3.CSPD_A) * 0.3333 ; divide by 3
 	AM3TOT_V = li.1.TOT_V_A + li.2.TOT_V_A + li.3.TOT_V_A
@@ -1018,7 +1015,6 @@ linko=?daynet_SZ_PjtVMT.dbf format=dbf
 	DYVMTII_PJT = AM3VMTII_PJT + MD5VMTII_PJT + PM3VMTII_PJT + N13VMTII_PJT
 	DYVMTIX_PJT = AM3VMTIX_PJT + MD5VMTIX_PJT + PM3VMTIX_PJT + N13VMTIX_PJT
 	DYVMTXI_PJT = AM3VMTXI_PJT + MD5VMTXI_PJT + PM3VMTXI_PJT + N13VMTXI_PJT
-	DYCSPD_Agrp = 0
 
 	;split speeds into bins AM3CSPD_A AM3CSPD_Agrp
     if (AM3CSPD_A > 0.000 & AM3CSPD_A <= 5.000) AM3CSPD_Agrp=5
