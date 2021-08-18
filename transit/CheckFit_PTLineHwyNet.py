@@ -169,11 +169,11 @@ def get_hwynet_nodepairs(in_hwylink_dbf):
 def pair_check(in_node_pair, master_list):
     '''checks to see if either (A, B) or (B, A) is in the highway network'''
     pair_raw = in_node_pair # (a, b)
-    pair_rev = (in_node_pair[1], in_node_pair[0]) # (b, a)
+    pair_rev = [in_node_pair[1], in_node_pair[0]] # (b, a)
     
     raw_in_net = pair_raw in master_list
     rev_in_net = pair_rev in master_list
-    
+
     if raw_in_net:
         result = "OK" # can skip, no missing links or instances of going wrong way
     elif raw_in_net is False and rev_in_net is True:
@@ -248,11 +248,14 @@ if __name__ == '__main__':
     flag_wrong_ways = False
     
     # ===================BEGIN SCRIPT=================================
-    date_sufx = str(dt.date.today().strftime('%m%d%Y'))
+    date_sufx = str(dt.date.today().strftime('%m%d%Y_%H%M'))
     out_csv = os.path.join(output_csv_dir, f"TrnNodePairCheck{date_sufx}.csv")
     
     df_out = check_tranlinks(tranline_in, network_links_dbf, check_for_wrongways=flag_wrong_ways)
     df_out.to_csv(out_csv, index=False)
 
-    print(f"Success! Output CSV is {out_csv}")
+    print(f"""Success! Output CSV is {out_csv}.
+        \n Note that Amtrak rail lines, due to having the mode tag of commute buses,
+        will erroneously show up as having links in the highway network. You can IGNORE
+        these flags as they are not actually missing. Rail links are stored in the transit_links.csv file.""")
     # import pdb; pdb.set_trace()
