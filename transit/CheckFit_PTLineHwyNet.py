@@ -231,9 +231,6 @@ def check_tranlinks(tranline_txt_file, hwylink_dbf, check_for_wrongways=False):
                 pair_data_list = [line_name, tnode_a, tnode_b, pair_status] # [line_name, anode, bnode, status]
                 output_data_list.append(pair_data_list)
 
-        # if len(output_data_list) > 0:
-        #     import pdb; pdb.set_trace()
-
     df_outputs = pd.DataFrame(output_data_list, columns=output_df_headers)
     return df_outputs        
 
