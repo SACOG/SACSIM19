@@ -1,7 +1,7 @@
 """
 Name: CheckFit_PTLineHwyNet.py
 Purpose: Make sure that a CUBE highway network link exists for every link specified
-    in a transit line TXT file. This will prevent errors from occurring during model runs
+    in a transit line TXT file. This will prevent errors from occurring during model runs.
         
 INSTRUCTIONS:
     1 - From CUBE, export the highway network you want to use as a DBF of highway links (not hwy nodes)
@@ -20,7 +20,7 @@ import os
 import re
 import datetime as dt
 
-# import pandas as pd
+import pandas as pd
 from dbfread import DBF
 
 
@@ -161,7 +161,7 @@ def get_hwynet_nodepairs(in_hwylink_dbf):
     linkdbfobj.load()
     
     # output will be list of node pairs
-    out_pair_list = [(row[fld_node_a], row[fld_node_b]) for row in linkdbfobj.records]
+    out_pair_list = [[row[fld_node_a], row[fld_node_b]] for row in linkdbfobj.records]
     
     return out_pair_list
 
@@ -175,18 +175,18 @@ def pair_check(in_node_pair, master_list):
     rev_in_net = pair_rev in master_list
     
     if raw_in_net:
-        result = 1 # can skip, no missing links or instances of going wrong way
+        result = "OK" # can skip, no missing links or instances of going wrong way
     elif raw_in_net is False and rev_in_net is True:
-        result = 2 # reverse link exists, so either transit line is coded as 2-way or it is going wrong way on the link
+        result = "CHECK_DIR" # reverse link exists, so either transit line is coded as 2-way or it is going wrong way on the link
     elif raw_in_net + rev_in_net == 0:
-        result = 3 # link doesn't exist and needs to fixed
+        result = "LINK_MISSING" # link doesn't exist and needs to fixed
     else:
         raise Exception("Execution error in pair_check function")
         
     # if pair_raw == (9295, 9293): import pdb; pdb.set_trace()
     
     return result
-    
+
 
 def check_tranlinks(tranline_txt_file, hwylink_dbf, check_for_wrongways=False):
     #linkrows = list of lists; each list containing line-level attributes for transit routes
@@ -211,59 +211,48 @@ def check_tranlinks(tranline_txt_file, hwylink_dbf, check_for_wrongways=False):
         else:
             continue
         
+    output_data_list = []
+    output_df_headers = ["NAME", "A", "B", "LINK_HWYNET_STATUS"]
     for line_name, node_list in line_nodes_dict.items():
-        line_pair_list = [(node_list[i], node_list[i + 1]) for i, v in enumerate(node_list) \
+        # list of lists containing node pairs: [[1, 2], [3, 4]...]
+        line_pair_list = [[node_list[i], node_list[i + 1]] for i, v in enumerate(node_list) \
                      if (i + 1) <= (len(node_list)-1)]
-        
-        missing_links = []
-        wrong_way_links = []
+
         for trn_node_pair in line_pair_list:
-            # 1 = okay, 2 = may be wrong way, 3 = no link between nodes in pair
+                        # 1 = okay, 2 = may be wrong way, 3 = no link between nodes in pair
             try:
                 pair_status = pair_check(trn_node_pair, hwy_nodepairs)
             except:
                 import pdb; pdb.set_trace()
-            
-            if pair_status == 2: wrong_way_links.append(trn_node_pair)
-            elif pair_status == 3:
-                missing_links.append(trn_node_pair)
-                # import pdb; pdb.set_trace()
-            else:
-                continue
-        
-        
-        if check_for_wrongways:
-            if len(missing_links + wrong_way_links) > 0:
-                out_str = f"""
-                {line_name} has the following node pairs that do not exist in the highway
-                network:
-                {missing_links}\n
-                And the following links for which the transit line may be going the wrong direction:
-                {wrong_way_links}\n
-                """
-            else: continue
-        else:
-            if len(missing_links) > 0:
-                out_str = f"""
-                {line_name} has the following node pairs that do not exist in the highway
-                network:
-                {missing_links}\n
-                """
-                
-                print(out_str)
-            else: continue
-        
-        
+
+            if pair_status != "OK":
+                tnode_a = trn_node_pair[0]
+                tnode_b  = trn_node_pair[1]
+                pair_data_list = [line_name, tnode_a, tnode_b, pair_status] # [line_name, anode, bnode, status]
+                output_data_list.append(pair_data_list)
+
+        # if len(output_data_list) > 0:
+        #     import pdb; pdb.set_trace()
+
+    df_outputs = pd.DataFrame(output_data_list, columns=output_df_headers)
+    return df_outputs        
 
 #======================RUN SCRIPT============================================
 
 if __name__ == '__main__':
-    tranline_in = r"Q:\SACSIM19\2020MTP\transit\Transit Model Inputs\2016\TranInputs2016_latest\2016_tranline.txt" # r"Q:\SACSIM19\2020MTP\transit\Transit Model Inputs\2027\TranInputs2027_latest\pa27_tranline.txt"
-    network_nodes_dbf = r"Q:\SACSIM19\2020MTP\highway\network update\NetworkGIS\DBF\Link\masterSM19ProjCoding_latest_10222020.dbf"
+    tranline_in = r"Q:\SACSIM23\Network\Cube\TransitLIN\pa35_tranline.lin"
+    network_links_dbf = r"Q:\SACSIM23\Network\SM23GIS\DBF\masterLINK08172021.dbf"
+
+    output_csv_dir = r"Q:\SACSIM23\Network\Temp"
 
     flag_wrong_ways = False
     
     # ===================BEGIN SCRIPT=================================
     date_sufx = str(dt.date.today().strftime('%m%d%Y'))
+    out_csv = os.path.join(output_csv_dir, f"TrnNodePairCheck{date_sufx}.csv")
     
-    check_tranlinks(tranline_in, network_nodes_dbf, check_for_wrongways=flag_wrong_ways)
+    df_out = check_tranlinks(tranline_in, network_links_dbf, check_for_wrongways=flag_wrong_ways)
+    df_out.to_csv(out_csv, index=False)
+
+    print(f"Success! Output CSV is {out_csv}")
+    # import pdb; pdb.set_trace()

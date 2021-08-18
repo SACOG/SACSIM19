@@ -34,9 +34,10 @@ if __name__ == '__main__':
     sacsim_arterials = [2, 3, 4, 5, 12, 22, 24]
     sacsim_ramps = [6] # arterial-to-freeway on-off ramps
     sacsim_roadname = "NAME"
-    stickball_xtraflds = []
+    stickball_xtraflds = ["SPEED", "LANES", "BIKE", "TOLLID", "GPID", "AUXID", "USECLASS", 
+                        "HOVLINK", "DISTANCE", "SACTRAK", "SPDCURV", "DELCURV"]
 
-
+    """ 
     #true-shape input parameters for INRIX TMC SHP 
     
     trueshp_links = r"Q:\SACSIM23\network_update\SACSIM23NetUpdate\SACSIM23NetUpdate.gdb\INRIX_SHP_2020_2021_noRampsSACOG"
@@ -52,9 +53,9 @@ if __name__ == '__main__':
     # variables not being used, but may be useful in future if making capability to conflate ramps too.
     trueshp_rampflag_col = 'Type'
     trueshp_rampflag_val = 'P4.0' # links with this Type value are ramps (both street-freeway and freeway-freeway ramps)
-   
+    """
 
-    """ 
+
     # true-shape params for HERE SHP that ships with Sugar data
     trueshp_links = r"Q:\SACSIM23\network_update\SACSIM23NetUpdate\SACSIM23NetUpdate.gdb\HERE_Sugar_2019_pubROW_ctype_nearSSlinksNoRamp" 
     trueshp_linkid = 'LINK_ID'
@@ -68,7 +69,7 @@ if __name__ == '__main__':
 
     trueshp_rampflag_col = 'RAMP'
     trueshp_rampflag_val = 'Y' # links with this Type value are ramps (both street-freeway and freeway-freeway ramps)
-     """
+
 
 
 
@@ -116,7 +117,3 @@ if __name__ == '__main__':
 
           """)
 
-
-
-
-# %%
