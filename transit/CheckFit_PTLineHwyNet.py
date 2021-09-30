@@ -25,7 +25,6 @@ from dbfread import DBF
 
 
 
-
 #=============================FUNCTIONS==========================================
 def make_link_node_lists(in_file):
     try:        
@@ -168,6 +167,12 @@ def get_hwynet_nodepairs(in_hwylink_dbf):
 
 def pair_check(in_node_pair, master_list):
     '''checks to see if either (A, B) or (B, A) is in the highway network'''
+
+    r_ok = "OK"
+    r_checkdir = "CHECK_DIR"
+    r_deadlink = "DISABLED_LINK"
+    r_linkmissing = "LINK_MISSING"
+
     pair_raw = in_node_pair # (a, b)
     pair_rev = [in_node_pair[1], in_node_pair[0]] # (b, a)
     
@@ -175,11 +180,11 @@ def pair_check(in_node_pair, master_list):
     rev_in_net = pair_rev in master_list
 
     if raw_in_net:
-        result = "OK" # can skip, no missing links or instances of going wrong way
+        result = r_ok # can skip, no missing links or instances of going wrong way
     elif raw_in_net is False and rev_in_net is True:
-        result = "CHECK_DIR" # reverse link exists, so either transit line is coded as 2-way or it is going wrong way on the link
+        result = r_checkdir # reverse link exists, so either transit line is coded as 2-way or it is going wrong way on the link
     elif raw_in_net + rev_in_net == 0:
-        result = "LINK_MISSING" # link doesn't exist and needs to fixed
+        result = r_linkmissing # link doesn't exist and needs to fixed
     else:
         raise Exception("Execution error in pair_check function")
         
@@ -191,7 +196,10 @@ def pair_check(in_node_pair, master_list):
 def check_tranlinks(tranline_txt_file, hwylink_dbf, check_for_wrongways=False):
     #linkrows = list of lists; each list containing line-level attributes for transit routes
     #noderows = list of lists; each list is a node within each line with some line-level attributes
+    print("loading transit line data...")
     linkrows, noderows = make_link_node_lists(tranline_txt_file)
+    
+    print("loading highway network node pairs...")
     hwy_nodepairs = get_hwynet_nodepairs(hwylink_dbf)
 
     # {line name: line mode (1=rail, 2=exp bus, 3=local bus)}
@@ -211,6 +219,7 @@ def check_tranlinks(tranline_txt_file, hwylink_dbf, check_for_wrongways=False):
         else:
             continue
         
+    print("comparing transit line links against highway network pairs...")
     output_data_list = []
     output_df_headers = ["NAME", "A", "B", "LINK_HWYNET_STATUS"]
     for line_name, node_list in line_nodes_dict.items():
@@ -237,8 +246,8 @@ def check_tranlinks(tranline_txt_file, hwylink_dbf, check_for_wrongways=False):
 #======================RUN SCRIPT============================================
 
 if __name__ == '__main__':
-    tranline_in = r"Q:\SACSIM23\Network\Cube\TransitLIN\pa35_tranline.lin"
-    network_links_dbf = r"Q:\SACSIM23\Network\SM23GIS\DBF\masterLINK08172021.dbf"
+    tranline_in = r"Q:\SACSIM23\Network\Cube\TransitLIN\2016_tranline_TAZ21.lin"
+    network_links_dbf = r"Q:\SACSIM23\Network\SM23GIS\DBF\masterSM23_20210930_test.dbf"
 
     output_csv_dir = r"Q:\SACSIM23\Network\Temp"
 
