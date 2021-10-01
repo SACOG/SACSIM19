@@ -239,6 +239,9 @@ def check_tranlinks(tranline_txt_file, hwylink_dbf, check_for_wrongways=False):
                 tnode_b  = trn_node_pair[1]
                 pair_data_list = [line_name, tnode_a, tnode_b, pair_status] # [line_name, anode, bnode, status]
                 output_data_list.append(pair_data_list)
+        
+        # if line_name == 'SRTD25R_B':
+        #     import pdb; pdb.set_trace()
 
     df_outputs = pd.DataFrame(output_data_list, columns=output_df_headers)
     return df_outputs        
@@ -246,7 +249,7 @@ def check_tranlinks(tranline_txt_file, hwylink_dbf, check_for_wrongways=False):
 #======================RUN SCRIPT============================================
 
 if __name__ == '__main__':
-    tranline_in = r"Q:\SACSIM23\Network\Cube\TransitLIN\2016_tranline_TAZ21.lin"
+    tranline_in = r"Q:\SACSIM23\Network\Cube\TransitLIN\pa35_tranline_TAZ21.lin" 
     network_links_dbf = r"Q:\SACSIM23\Network\SM23GIS\DBF\masterSM23_20210930_test.dbf"
 
     output_csv_dir = r"Q:\SACSIM23\Network\Temp"
@@ -254,7 +257,7 @@ if __name__ == '__main__':
     flag_wrong_ways = False
     
     # ===================BEGIN SCRIPT=================================
-    date_sufx = str(dt.date.today().strftime('%m%d%Y_%H%M'))
+    date_sufx = str(dt.datetime.now().strftime('%m%d%Y_%H%M'))
     out_csv = os.path.join(output_csv_dir, f"TrnNodePairCheck{date_sufx}.csv")
     
     df_out = check_tranlinks(tranline_in, network_links_dbf, check_for_wrongways=flag_wrong_ways)
