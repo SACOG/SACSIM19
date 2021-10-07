@@ -7,10 +7,10 @@
 ;           -micromobility policy (micromobility to transit)
 ;			
 ; Author: SACOG TMAT Manages script, SACSIM19 is built with support from Consultants and previous SACSIM iterations
-; Last Updated: 4/1/2020
+; Last Updated: 8/25/2021
 ; Last Updated By: Kyle Shipley
-; - added enhanced metering capabilities
-; Previous Version: RUN_sacsim19_wTolling_wTNC_AO17_BaseCap_wAdvT_wUserFee_v4_AO13.s 3/12/2019
+; - updated transit period order for cube 6.5 PT bug fix.
+; Previous Version: RUN_sacsim19_wTolling_wTNC_AO13_BaseCap_wAdvT_wBaseline_v5.s 8/11/2021
 ; SACOG
 ;======================================================================
 
@@ -988,10 +988,15 @@ endrun
     loop p=1,6                          ;endloop at line 1060
         if (p=1) trper='am4'
         if (p=2) trper='md6'
-        if (p=3) trper='pm3'
-        if (p=4) trper='ev2'
+        if (p=3) trper='ev2'
+        if (p=4) trper='pm3'
         if (p=5) trper='ni9'
 
+        if (p=1) hdp=1
+        if (p=2) hdp=2
+        if (p=3) hdp=4
+        if (p=4) hdp=3
+        if (p=5) hdp=5			  
 
         if (p=1) pid=1
         if (p=2) pid=2
@@ -1018,7 +1023,7 @@ endrun
               FACTORI[3] = ..\input\PTfactor.mustcom.txt,
               FACTORI[4] = ..\input\PTfactor.txt
               
-        FILEI LINEI[1]   = ?_tranline.txt
+        FILEI LINEI[1]   = ?_tranline.lin
         FILEI FAREI      = ..\input\PTfare.txt
         FILEI NETI       = transitbackground.net
 
@@ -1038,7 +1043,7 @@ endrun
 
         ;Globals
         PARAMETERS TRANTIME = (li.@trper@time)
-            HDWAYPERIOD = @p@
+            HDWAYPERIOD = @hdp@
             FARE=T
 
         PHASE=DATAPREP
@@ -4546,7 +4551,7 @@ endrun
 					FACTORI[2] = ..\input\PTfactor.mustlrt.txt,
 					FACTORI[3] = ..\input\PTfactor.mustcom.txt,
 					FACTORI[4] = ..\input\PTfactor.txt
-				FILEI LINEI[1]   = ?_tranline.txt
+				FILEI LINEI[1]   = ?_tranline.lin
 				FILEI FAREI      = ..\input\PTfare.txt
 				FILEI NETI       = transitbackground.net
 	

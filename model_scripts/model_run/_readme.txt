@@ -1,5 +1,16 @@
 ***ADD Description and Update Notes for scripts in Folder
 ----------------------------------------------------
+Last Version Of Script full SACSIM19 script:
+
+10/7/2021
+Updated scripts PT transit lines ordering for Cube 6.4 - 6.5 bug fix. Script names and version the same, no change to results. 
+
+11/21 RUN_sacsim19_wTolling_wTNC_AO17_BaseCap_wAdv
+  -Includes TNCS AV feature
+  -All Lane Tolling
+  -Advanced Tolling features: Reverse, Take a Lane, Shoulder Rds  
+  -Peak Off Peak Auto Type Use adjustments
+
 
 3/15/19
 Based on adding Pricing and review from John Gibbs at DKS
@@ -11,13 +22,6 @@ Based on adding Pricing and review from John Gibbs at DKS
 •	Transit lines and fares
 •	User fee urban\rural boundaries based on Community Type codes
 
-
-Last Version Of Script full SACSIM19 script:
-11/21 RUN_sacsim19_wTolling_wTNC_AO17_BaseCap_wAdv
-  -Includes TNCS AV feature
-  -All Lane Tolling
-  -Advanced Tolling features: Reverse, Take a Lane, Shoulder Rds  
-  -Peak Off Peak Auto Type Use adjustments
 
 
 2040 Model Run Script
