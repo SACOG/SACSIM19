@@ -43,7 +43,7 @@ class modelRunSummary:
         self.c_distau = 'distau'
         self.c_distcong = 'distcong'
 
-        self.tripcols = [self.c_pno, self.c_hhno, self.c_mode, self.c_dorp,
+        self.tripcols = [self.c_hhno, self.c_mode, self.c_dorp,
                         self.c_distau, self.c_distcong] #specify columns you want to import. This will save memory.
         
         self.df_trip = self.load_table(self.in_trip_file, self.tripcols)
@@ -55,10 +55,11 @@ class modelRunSummary:
 
         self.hhcols = [self.c_hhno, self.c_hhsize]
 
-        self.df_hh = self.load_table(self.in_trip_file, self.tripcols)
+        self.df_hh = self.load_table(self.in_hh_file, self.hhcols, delim_char='\t')
 
     def load_table(self, in_table, use_cols, delim_char=','):
         tbl_path = os.path.join(self.model_run_dir, in_table)
+        print(f"reading {tbl_path} into dataframe...")
         df = pd.read_csv(tbl_path, usecols=use_cols, delimiter=delim_char)
         memory_optimization(df)
         return df
@@ -85,9 +86,7 @@ class modelRunSummary:
         In theory this is a better way of estimating actual vehicle trips.
         """
 
-        mgrp = self.df_trip.loc[self.df_trip[self.c_dorp] == 1] \
-            .groupby('mode')
-        total_vmt = mgrp.sum()[vmt_col] #get sum of vmt grouped by mode
+        total_vmt = self.df_trip.loc[self.df_trip[self.c_dorp] == 1].shape[0]
 
         return total_vmt
 
@@ -96,13 +95,16 @@ class modelRunSummary:
         return tot_hh_pop
 
     def get_mode_trip_shares(self, mode_val):
-        mode_trips = self.df_trip.loc[self.df_trip[self.c_mode] == mode_val].sum()
+        
+        mode_trips = self.df_trip.loc[self.df_trip[self.c_mode] == mode_val].shape[0]
+                     
         return mode_trips
 
     def get_topline(self):
         tot_pop = self.calc_hh_pop()
-        tot_vmt_fracmethod = self.calc_res_vmt_paxcnt()
-        tot_vmt_dorp = self.calc_res_vmt_dorp()
+        tot_restrips = self.df_trip.shape[0]
+        tot_vmt_fracmethod = self.calc_res_vmt_paxcnt(self.c_distau)
+        tot_vmt_dorp = self.calc_res_vmt_dorp(self.c_distau)
         vmt_cap_frac = tot_vmt_fracmethod / tot_pop
         vmt_cap_dorp = tot_vmt_dorp / tot_pop
 
@@ -112,10 +114,13 @@ class modelRunSummary:
         trips_x_mode = [self.get_mode_trip_shares(mode_id) for mode_id in modes.keys()]
 
         dict_trips_x_mode = dict(zip(modenames, trips_x_mode))
+         
 
         out_dict = {"tot_pop": tot_pop, "tot_vmt_fracmethod": tot_vmt_fracmethod,
-                    "tot_vmt_dorp": tot_vmt_dorp, "vmt_cap_frac": vmt_cap_frac,
-                    "vmt_cap_dorp": vmt_cap_dorp}.update(dict_trips_x_mode)
+                    "tot_restrips": tot_restrips, "tot_vmt_dorp": tot_vmt_dorp,
+                    "vmt_cap_frac": vmt_cap_frac, "vmt_cap_dorp": vmt_cap_dorp}
+
+        out_dict2 = out_dict.update(dict_trips_x_mode)
 
         for k, v in out_dict.items():
             print(f"{k}: {v}")
@@ -126,13 +131,14 @@ class modelRunSummary:
 if __name__ == '__main__':
     #=======================USER-DEFINED INPUT PARAMETERS=========================
 
-    in_dir_root = r'C:\SACSIM19\TransitTimefacTesting\MTP2020Am1_TFReduce50pct' # input('Enter path to model run folder: ')
+    in_dir_root = r'\\Win10-Model-1\Model-1-Data\SACSIM19\MTP2020\amendment_1\afterMeterFix\2016\run_2016_fixDelCurv' # input('Enter path to model run folder: ')
 
 
     #=========================WRITE OUT TO CSV===========================
     date_suffix = str(datetime.date.today().strftime('%Y%m%d'))
 
     sumobj = modelRunSummary(in_dir_root)
+    sumobj.get_topline()
 
 
     print("\nSuccess!")
