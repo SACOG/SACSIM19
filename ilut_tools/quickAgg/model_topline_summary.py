@@ -86,7 +86,10 @@ class modelRunSummary:
         In theory this is a better way of estimating actual vehicle trips.
         """
 
-        total_vmt = self.df_trip.loc[self.df_trip[self.c_dorp] == 1].shape[0]
+        total_vmt = self.df_trip.loc[self.df_trip[self.c_dorp] == 1][vmt_col] \
+                    .sum()
+
+        #import pdb; pdb.set_trace()
 
         return total_vmt
 
@@ -131,7 +134,7 @@ class modelRunSummary:
 if __name__ == '__main__':
     #=======================USER-DEFINED INPUT PARAMETERS=========================
 
-    in_dir_root = r'\\Win10-Model-1\Model-1-Data\SACSIM19\MTP2020\amendment_1\afterMeterFix\2016\run_2016_fixDelCurv' # input('Enter path to model run folder: ')
+    in_dir_root = r'C:\SACSIM19\TransitTimefacTesting\MTP2020Am1_TFReduce50pct' # input('Enter path to model run folder: ')
 
 
     #=========================WRITE OUT TO CSV===========================
