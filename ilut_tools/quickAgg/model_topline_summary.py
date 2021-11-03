@@ -134,7 +134,7 @@ class modelRunSummary:
 if __name__ == '__main__':
     #=======================USER-DEFINED INPUT PARAMETERS=========================
 
-    in_dir_root = r'C:\SACSIM19\TransitTimefacTesting\MTP2020Am1_TFReduce50pct' # input('Enter path to model run folder: ')
+    in_dir_root = input('Enter path to model run folder: ') # r'C:\SACSIM19\TransitTimefacTesting\MTP2020Am1_TFIncrease50pct' # 
 
 
     #=========================WRITE OUT TO CSV===========================
