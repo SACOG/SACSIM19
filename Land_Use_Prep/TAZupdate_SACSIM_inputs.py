@@ -128,7 +128,7 @@ def print_sorted(filename, col_sort):
 
 def update_textfiles(text,replaceDict,columnkeynum,sort_colnum):
 
-    for line in fileinput.input(text, inplace=True,backup='.bak'):
+    for line in fileinput.input(text, inplace=True,backup='org.bak'):
         line = line.rstrip()
         linelist = line.split(',')
         parc = -1
@@ -200,32 +200,32 @@ def new_dbffile_taz(fc,outpathfile,fckey):
      'XPRKCOST']
     #fckey: 'TAZ'
     dffull = convert_to_pandas_df(fc)
-    print(dffull.head(3))
+    #print(dffull.head(3))
     dffull.rename(columns={
                             'PUMA_1': 'PUMA',
                          'NewRADNum': 'RAD',
                          'SQFT_ZTAZ21': 'SQFT_Z'
                          }, inplace=True)
-    print("renamed")
+    #print("renamed")
     dfout = dffull[OrderedoutParcelFields]
     #dfout = dfout.reindex(columns=OrderedoutParcelFields)
 
     #Join to existing shapefile
     gdf_ex = gpd.read_file((TAZ_shp))
-    print(gdf_ex.columns)
-    print(gdf_ex.head(3))
+    #print(gdf_ex.columns)
+    #print(gdf_ex.head(3))
     #gdf_ex = gdf_ex[[fckey]]
-    print("Load Existing Shapefile: %s minutes ---" % (round((time.time() - start_time) / 60, 1)))
-    print(gdf_ex.columns)
-    print(gdf_ex.head(3))
-    print(dfout.columns)
-    print(dfout.head(3))
+    #print("Load Existing Shapefile: %s minutes ---" % (round((time.time() - start_time) / 60, 1)))
+    #print(gdf_ex.columns)
+    #print(gdf_ex.head(3))
+    #print(dfout.columns)
+    #print(dfout.head(3))
 
     dfout.to_csv(TAZ_csv)
 
     gdf_ex2 = gdf_ex.merge(dfout,how='left',on=fckey)
-    print(gdf_ex2.columns)
-    print(gdf_ex2.head(3))
+    #print(gdf_ex2.columns)
+    #print(gdf_ex2.head(3))
     #use projection from input shapefile
     #prj_file = TAZ_shp.replace(".shp", ".prj")
     #prj = [l.strip() for l in open(prj_file, 'r')][0]
@@ -241,7 +241,7 @@ def new_dbffile_taz(fc,outpathfile,fckey):
 
     print("Append to Shapefile: %s minutes ---" % (round((time.time() - start_time) / 60, 1)))
     print('dbf complete!')
-
+    print("Warning: Check dbf field order due to bug: %s minutes ---" % (round((time.time() - start_time) / 60, 1)))
 ############################################
 
 
@@ -391,7 +391,7 @@ if __name__ == '__main__':
         must include:
     # Outputs:
         new_scenario folder with new files:
-         tazrad07.txt, _raw_parcel.txt, _raw_household.txt, _taz.dbf, daysim/worker_ixxifractions.dat, daysi
+         tazrad07.txt, _raw_parcel.txt, _raw_household.txt, _taz.dbf, daysim/worker_ixxifractions.dat, daysim/sacog_taz_indexes.dat
     """
 
     # Arguments are optional
@@ -420,7 +420,7 @@ if __name__ == '__main__':
     GatewayList = [1,2,3,4,5,6,7,8,9,13,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30] #will need to update if adding new gateways
 
     #path of existing scearnio folder, a new folder will be created with outputs in directory
-    UserModelScenario = r'Q:\SACSIM23\TAZ updates\Update_SACSIM_input_files\SACSIM19_35\SACSIM19.02.01_2035_baseline_newScript\scenario_runfolder'
+    UserModelScenario = r'Q:\SACSIM23\TAZ updates\Update_SACSIM_input_files\SACSIM19_35\SACSIM19.02.01_2016\SACSIM19.02.01_2016_baseline'
     prefix = '2016'
 
     #change to false if update is not needed
