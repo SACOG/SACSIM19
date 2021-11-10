@@ -40,7 +40,7 @@ def shp2fc_sel_fields(workspace, in_fc, field_list, out_fc):
                 vars()[field].addInputField(in_fc, field)
                 field_maps.addFieldMap(vars()[field])
             else:
-                print(f"'{field}' field is not in the input SHP, so won't be in output either.")
+                print(f"'{field}' field is not in {in_fc}, so won't be in output either.")
         except:
             print("ERROR IN TRYING TO SET FIELDS")
             import pdb; pdb.set_trace()

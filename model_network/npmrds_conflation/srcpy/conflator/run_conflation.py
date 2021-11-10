@@ -23,43 +23,49 @@ from conflation import conflation
 # #%%
 if __name__ == '__main__':
     # =============INPUT PARAMETERS=========================
-    output_fgdb = r"Q:\SACSIM23\network_update\SACSIM23NetUpdate\SACSIM23NetUpdate.gdb"
+    output_fgdb = r"Q:\SACSIM23\Network\SM23GIS\SM23GIS.gdb"
 
     #stick-ball input parameters
-    calc_dirn_data = False # whether to calculate cardinal angles for model links
+    calc_dirn_data = True # whether to calculate cardinal angles for model links. if unsure whether links already have field with this, set to True.
 
-    sacsim_links = r"D:\SACSIM19\MTP2020\2016_UpdatedAug2020\run_2016_baseline_AO13_V7_NetUpdate08202020\AssnOnlyTesting_CubeGIS\SHP\2016_base.shp" # r"Q:\SACSIM19\2020MTP\highway\network update\NetworkGIS\SHP\Link\masterSM19ProjCoding_10022020.shp"
-    sacsim_capc = 'CAPCLASS' # 'CAPC20'
-    sacsim_fwys = [1] # 1 = mainline freeways; 8 = HOV lanes, 16 = freeway-to-freeway connectors--though these arguably should be ramps
-    sacsim_arterials = [2, 3, 4, 5, 12, 22, 24]
-    sacsim_ramps = [6] # arterial-to-freeway on-off ramps
-    sacsim_roadname = "NAME"
+    # file path to SHP or feature class of stick-ball links (e.g. SACSIM links)
+    sacsim_links = r"Q:\SACSIM23\Network\SM23GIS\MN_link_forConflation_YZ\MN_Link_1109.shp" # r"Q:\SACSIM19\2020MTP\highway\network update\NetworkGIS\SHP\Link\masterSM19ProjCoding_10022020.shp"
+    
+    sacsim_capc = 'CAPC20' # 'CAPCLASS' # SACSIM capacity class field name.
+    sacsim_fwys = [1] # SACSIM capclasses that are on freeways: 1 = mainline freeways; 8 = HOV lanes, 16 = freeway-to-freeway connectors--though these arguably should be ramps
+    sacsim_arterials = [2, 3, 4, 5, 12, 22, 24] # SACSIM capclasses on arterials
+    sacsim_ramps = [6] # SACSIM capclass value for arterial-to-freeway on-off ramps
+    sacsim_roadname = "NAME" # field for common name of the street that the segment is on.
+
+    # additional SACSIM fields you want in the output
     stickball_xtraflds = ["SPEED", "LANES", "BIKE", "TOLLID", "GPID", "AUXID", "USECLASS", 
                         "HOVLINK", "DISTANCE", "SACTRAK", "SPDCURV", "DELCURV"]
 
-    """ 
+
     #true-shape input parameters for INRIX TMC SHP 
-    
-    trueshp_links = r"Q:\SACSIM23\network_update\SACSIM23NetUpdate\SACSIM23NetUpdate.gdb\INRIX_SHP_2020_2021_noRampsSACOG"
-    trueshp_linkid = 'Tmc'
-    trueshp_dirn_field = 'DirectionAbb'
-    trueshp_funcclass = 'FRC'
-    trueshp_fwys = [1, 2]
-    trueshp_arterials = [3, 4, 5, 6, 99]
-    trueshp_roadnam = "RoadName"
-    trueshp_len = 'Miles'
-    extra_fields_trueshp = ['RoadNumber', 'Type']
+
+    # file path to SHP or feature class of stick-ball links (e.g. SACSIM links)
+    trueshp_links = r"Q:\SACSIM23\Network\SM23GIS\SM23GIS.gdb\INRIX_SHP_2020_2021_SACOG"
+
+    trueshp_linkid = 'Tmc' # unique identifier field
+    trueshp_dirn_field = None # field with abbreviated N/S/E/W direction tag. If unsure if the layer has one, set to None, which will add and calculate (or re-calculate if exists) the value
+    trueshp_funcclass = 'FRC' # functional class field
+    trueshp_fwys = [1, 2] # functional class field values indicating grade-separated freeways
+    trueshp_arterials = [3, 4, 5, 6, 99] # func class field values for arterials
+    trueshp_roadnam = "RoadName" # field with common name of street
+    trueshp_len = 'Miles' # field with segment length
+    extra_fields_trueshp = ['RoadNumber', 'Type'] # additional fields you want considered
 
     # variables not being used, but may be useful in future if making capability to conflate ramps too.
-    trueshp_rampflag_col = 'Type'
+    trueshp_rampflag_col = 'Type' # field indicating whether segment is a ramp
     trueshp_rampflag_val = 'P4.0' # links with this Type value are ramps (both street-freeway and freeway-freeway ramps)
-    """
 
 
+    """ 
     # true-shape params for HERE SHP that ships with Sugar data
     trueshp_links = r"Q:\SACSIM23\network_update\SACSIM23NetUpdate\SACSIM23NetUpdate.gdb\HERE_Sugar_2019_pubROW_ctype_nearSSlinksNoRamp" 
     trueshp_linkid = 'LINK_ID'
-    trueshp_dirn_field = None
+    trueshp_dirn_field = None # field with abbreviated N/S/E/W direction tag. If unsure if the layer has one, set to None
     trueshp_funcclass = 'FUNC_CLASS'
     trueshp_fwys = ['1', '2']
     trueshp_arterials = ['3', '4', '5', '6', '99']
@@ -70,7 +76,7 @@ if __name__ == '__main__':
     trueshp_rampflag_col = 'RAMP'
     trueshp_rampflag_val = 'Y' # links with this Type value are ramps (both street-freeway and freeway-freeway ramps)
 
-
+    """
 
 
 
