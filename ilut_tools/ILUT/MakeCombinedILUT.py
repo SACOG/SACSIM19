@@ -24,13 +24,13 @@ import pyodbc
 #===================================FUNCTIONS================================
 class ILUTReport():
 
-    def __init__(self, model_run_dir, envision_tomorrow_tbl=None, pop_table=None, sc_yr=None,
+    def __init__(self, model_run_dir, dbname, envision_tomorrow_tbl=None, pop_table=None, sc_yr=None,
                  sc_code=None, av_tnc_type=None, sc_desc=None):
         
         # ========parameters that are unlikely to change or are changed rarely======
         self.driver = '{SQL Server}'
         self.server = 'SQL-SVR'
-        self.database = 'MTP2020'
+        self.database = dbname
         self.trusted_connection = 'yes'
         self.conxn_info = "DRIVER={0}; SERVER={1}; DATABASE={2}; Trusted_Connection={3}" \
             .format(self.driver, self.server, self.database, self.trusted_connection)
@@ -117,7 +117,6 @@ class ILUTReport():
         
         self.av_tnc_type = int(self.av_tnc_type)
         self.scenario_extn = "{}_{}".format(self.sc_yr, self.sc_code)
-        # import pdb; pdb.set_trace()
         
 
     def check_if_table_exists(self, table_name):
@@ -250,6 +249,7 @@ class ILUTReport():
             hh_params = [self.pop_table, raw_hh, raw_parcel,hh_outtbl]
             self.run_sql(hh_sql,hh_params)
             
+        # create comm veh ixxi table
         if create_cvixxi_table:
             cvixxi_params = [raw_parcel, raw_cveh, self.taz_rad_table, 
                              raw_hh, raw_ixxi, cvixxi_outtbl]
@@ -286,14 +286,14 @@ class ILUTReport():
 
 
 if __name__ == '__main__':
-    report_obj = ILUTReport(model_run_dir = r'D:\SACSIM19\MTP2020\MTP_Amendment\FixDELCURV\2035_baseline\run_2035_MTIP_Amd1_Baseline_v2',
-        envision_tomorrow_tbl='raw_eto2035_latest', pop_table='raw_Pop2035_latest', sc_yr=2035,
-                 sc_code=212, av_tnc_type=1, 
-                 sc_desc='Uses inputs from 2035_209 with base net updated to reflect minor fixes after 2020 MTIP amendment')
-    report_obj.run_report(create_triptour_table = True,
-                    create_person_table = True,
-                    create_hh_table = True,
+    report_obj = ILUTReport(model_run_dir = r'\\win10-you\E\SACSIM19\PEP_testing\With_or_noProject\Bus80\With_project\BUS80_withPro_RS1234',
+        dbname='MTP2024', envision_tomorrow_tbl='raw_eto2040_latest', pop_table='raw_Pop2040_latest', sc_yr=2040,
+                 sc_code=999, av_tnc_type=1, 
+                 sc_desc='testing')
+    report_obj.run_report(create_triptour_table = False,
+                    create_person_table = False,
+                    create_hh_table = False,
                     create_cvixxi_table = True,
-                    create_comb_table = True)
+                    create_comb_table = False)
 
 

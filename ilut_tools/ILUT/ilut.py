@@ -58,7 +58,7 @@ if __name__ == '__main__':
     query_dir = os.path.abspath("sql_bcp")
     
     sql_server_name = 'SQL-SVR'
-    ilut_db_name = 'MTP2020'
+    ilut_db_name = 'MTP2024'
     
     # in table names, base year and earlier is usually written as 4-digit year, while for future years its
     # writted as "pa<two-digit year"
@@ -163,7 +163,7 @@ if __name__ == '__main__':
     if run_ilut_combine.lower() == 'y':
         eto_tbl = env_tmrw_yr_dict[scenario_year]
         popn_tbl = pop_yr_dict[scenario_year]
-        comb_rpt = ILUTReport(model_run_dir=model_run_folder, sc_yr=scenario_year, 
+        comb_rpt = ILUTReport(model_run_dir=model_run_folder, dbname=ilut_db_name, sc_yr=scenario_year, 
                               sc_code=scenario_id, envision_tomorrow_tbl=eto_tbl,
                               pop_table=popn_tbl)
         
@@ -184,11 +184,6 @@ if __name__ == '__main__':
     
     # change workspace to model run folder
     os.chdir(model_run_folder)
-    
-    # pre-process DBF and DAT files to make them into loadable CSVs
-    # print(f"converting{dbf_cveh_taz} and {dat_ixworker} to CSVs for loader compatibility...")
-    # dbf_to_csv(dbf_cveh_taz,csv_cveh_taz)
-    # dat_to_csv(dat_ixworker, csv_ixworker, ' ')
     
     tbl_loader = BCP(svr_name=sql_server_name, db_name=ilut_db_name)
     
