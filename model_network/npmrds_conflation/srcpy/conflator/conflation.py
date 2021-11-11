@@ -58,7 +58,15 @@ class conflation:
 
         return sql
 
-
+    def adjust_func_classes(self, in_fclss_tuple):
+        """If there's only one func class value in the tuple, convert so that it can
+        be correctly read by the sql query. E.g., convert tuple of (1,) to be string '(1)' """
+        if len(in_fclss_tuple) > 1:
+            out_fclss_spec = in_fclss_tuple
+        else:
+            out_fclss_spec = f"({in_fclss_tuple[0]})"
+        
+        return out_fclss_spec
 
     def spatial_join_1(self, combined_link_pts_fc, road_type, join_search_dist):
     
@@ -203,14 +211,17 @@ class conflation:
                     arcpy.SelectLayerByLocation_management(self.links_trueshp.fl_trueshps, "WITHIN_A_DISTANCE", 
                                                         centr_geom, cust_srchdst_fwy,
                                                         "NEW_SELECTION")
-                    sql_fwytype = f"{self.links_trueshp.fld_func_class} IN {self.links_trueshp.funclass_fwys}"
+                    fwytypes = self.adjust_func_classes(self.links_trueshp.funclass_fwys)
+                    sql_fwytype = f"{self.links_trueshp.fld_func_class} IN {fwytypes}"
                     arcpy.SelectLayerByAttribute_management(self.links_trueshp.fl_trueshps, "SUBSET_SELECTION", sql_fwytype)
                     searchdist_int = int(re.match('\d+', cust_srchdst_fwy).group(0))
                 elif capc in self.links_stickball.funclass_arts:
                     arcpy.SelectLayerByLocation_management(self.links_trueshp.fl_trueshps, "WITHIN_A_DISTANCE", 
                                                         centr_geom, cust_srchdst_art,
                                                         "NEW_SELECTION")
-                    sql_notfwytype = f"{self.links_trueshp.fld_func_class} IN {self.links_trueshp.funclass_arts}"
+                    artertypes = self.adjust_func_classes(self.links_trueshp.funclass_arts)
+                    sql_notfwytype = f"{self.links_trueshp.fld_func_class} IN {artertypes}"
+                    # import pdb; pdb.set_trace()
                     arcpy.SelectLayerByAttribute_management(self.links_trueshp.fl_trueshps, "SUBSET_SELECTION", sql_notfwytype)   
                     searchdist_int = int(re.match('\d+', cust_srchdst_art).group(0)) 
                 else:

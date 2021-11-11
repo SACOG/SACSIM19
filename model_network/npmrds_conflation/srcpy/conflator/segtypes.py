@@ -39,6 +39,9 @@ class lineSegs:
         self.fld_rdname = fld_rdname # field for road name
 
         self.fld_func_class = fld_func_class # field for functional class, used to define fwy vs. arterial
+
+
+
         self.funclass_fwys = tuple(funclass_fwys) # func classes corresponding to freeways; need to tuple-ize for SQL syntax
         self.funclass_arts = tuple(funclass_arts) # func classes corresponding to arterials; need to tuple-ize for SQL syntax
 
