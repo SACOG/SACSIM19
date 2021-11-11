@@ -26,7 +26,7 @@ if __name__ == '__main__':
     output_fgdb = r"Q:\SACSIM23\Network\SM23GIS\SM23GIS.gdb"
 
     #stick-ball input parameters
-    calc_dirn_data = True # whether to calculate cardinal angles for model links. if unsure whether links already have field with this, set to True.
+    calc_dirn_data = False # whether to calculate cardinal angles for model links. if unsure whether links already have field with this, set to True.
 
     # file path to SHP or feature class of stick-ball links (e.g. SACSIM links)
     sacsim_links = r"Q:\SACSIM23\Network\SM23GIS\MN_link_forConflation_YZ\MN_Link_1109.shp" # r"Q:\SACSIM19\2020MTP\highway\network update\NetworkGIS\SHP\Link\masterSM19ProjCoding_10022020.shp"
@@ -48,10 +48,10 @@ if __name__ == '__main__':
     trueshp_links = r"Q:\SACSIM23\Network\SM23GIS\SM23GIS.gdb\INRIX_SHP_2020_2021_SACOG"
 
     trueshp_linkid = 'Tmc' # unique identifier field
-    trueshp_dirn_field = None # field with abbreviated N/S/E/W direction tag. If unsure if the layer has one, set to None, which will add and calculate (or re-calculate if exists) the value
-    trueshp_funcclass = 'FRC' # functional class field
-    trueshp_fwys = [1, 2] # functional class field values indicating grade-separated freeways
-    trueshp_arterials = [3, 4, 5, 6, 99] # func class field values for arterials
+    trueshp_dirn_field = 'c_textdirn' # field with abbreviated N/S/E/W direction tag. If unsure if the layer has one, set to None, which will add and calculate (or re-calculate if exists) the value
+    trueshp_funcclass = 'FwyTag' # functional class field
+    trueshp_fwys = [1] # functional class field values indicating grade-separated freeways
+    trueshp_arterials = [2] # func class field values for arterials
     trueshp_roadnam = "RoadName" # field with common name of street
     trueshp_len = 'Miles' # field with segment length
     extra_fields_trueshp = ['RoadNumber', 'Type'] # additional fields you want considered
