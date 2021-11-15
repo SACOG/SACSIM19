@@ -55,10 +55,11 @@ if __name__ == '__main__':
 
     #=============SELDOM-CHANGED PARAMETERS==========================
     # folder containing query files used to create tables
-    query_dir = os.path.abspath("sql_bcp")
+    os.chdir(os.path.dirname(__file__)) # ensure that you start in same folder as script
+    query_dir = os.path.abspath("sql_bcp") # subfolder with sql scripts
     
     sql_server_name = 'SQL-SVR'
-    ilut_db_name = 'MTP2020'
+    ilut_db_name = 'MTP2024'
     
     # in table names, base year and earlier is usually written as 4-digit year, while for future years its
     # writted as "pa<two-digit year"
@@ -74,6 +75,10 @@ if __name__ == '__main__':
     load_ixxworkerfractbl = True
     load_cveh_taztbl = True
     load_ixxi_taztbl = True
+
+    # master parcel table and TAZ table
+    taz_tbl = "TAZ07_RAD07"
+    master_parcel_table = "PARCEL_MASTER"
     
     # population tables
     pop_y1 = 'raw_Pop2016_latest'
@@ -163,32 +168,15 @@ if __name__ == '__main__':
     if run_ilut_combine.lower() == 'y':
         eto_tbl = env_tmrw_yr_dict[scenario_year]
         popn_tbl = pop_yr_dict[scenario_year]
-        comb_rpt = ILUTReport(model_run_dir=model_run_folder, sc_yr=scenario_year, 
+        comb_rpt = ILUTReport(model_run_dir=model_run_folder, dbname=ilut_db_name, sc_yr=scenario_year, 
                               sc_code=scenario_id, envision_tomorrow_tbl=eto_tbl,
-                              pop_table=popn_tbl)
-        
-        # make sure population and envision tomorrow tables indicated above actually exist in DB
-        eto_tbl_exists = comb_rpt.check_if_table_exists(eto_tbl)
-        popn_tbl_exists = comb_rpt.check_if_table_exists(popn_tbl)
-        
-        if eto_tbl_exists and popn_tbl_exists:
-            pass
-        else:
-            raise Exception("Envision Tomorrow and population tables not found. " \
-                            "Confirm that the envision tomorrow table and population " \
-                            "table names are spelled correctly and are in SQL Server.")
-        
+                              pop_table=popn_tbl, taz_rad_tbl=taz_tbl, master_pcl_tbl=master_parcel_table)
     else:
         pass
         print("Loading model output tables but will NOT run ILUT combination process...\n")
     
     # change workspace to model run folder
     os.chdir(model_run_folder)
-    
-    # pre-process DBF and DAT files to make them into loadable CSVs
-    # print(f"converting{dbf_cveh_taz} and {dat_ixworker} to CSVs for loader compatibility...")
-    # dbf_to_csv(dbf_cveh_taz,csv_cveh_taz)
-    # dat_to_csv(dat_ixworker, csv_ixworker, ' ')
     
     tbl_loader = BCP(svr_name=sql_server_name, db_name=ilut_db_name)
     

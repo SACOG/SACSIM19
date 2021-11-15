@@ -24,24 +24,28 @@ import pyodbc
 #===================================FUNCTIONS================================
 class ILUTReport():
 
-    def __init__(self, model_run_dir, envision_tomorrow_tbl=None, pop_table=None, sc_yr=None,
-                 sc_code=None, av_tnc_type=None, sc_desc=None):
+    def __init__(self, model_run_dir, dbname, envision_tomorrow_tbl=None, pop_table=None, 
+                taz_rad_tbl=None, master_pcl_tbl=None,
+                sc_yr=None, sc_code=None, av_tnc_type=None, sc_desc=None):
         
         # ========parameters that are unlikely to change or are changed rarely======
         self.driver = '{SQL Server}'
         self.server = 'SQL-SVR'
-        self.database = 'MTP2020'
+        self.database = dbname
         self.trusted_connection = 'yes'
         self.conxn_info = "DRIVER={0}; SERVER={1}; DATABASE={2}; Trusted_Connection={3}" \
             .format(self.driver, self.server, self.database, self.trusted_connection)
         self.scen_log_tbl = "ilut_scenario_log" #logs each run made and asks user for scenario description
         
         #sql script directory
+        os.chdir(os.path.dirname(__file__)) # ensure that you start in same folder as script
         self.sql_dir = os.path.abspath("sql_ilut_summary")
         
-        #Tables that aren't scenario-dependent
-        self.master_parcel_table = "mtpuser.PARCEL_MASTER"
-        self.taz_rad_table = "TAZ07_RAD07"
+        #Tables that don't come from model-run folder
+        self.master_parcel_table = master_pcl_tbl
+        self.taz_rad_table = taz_rad_tbl
+        self.envision_tomorrow_tbl = envision_tomorrow_tbl
+        self.pop_table = pop_table
         
         # Specify theme table queries to execute
         self.person_sql = "theme_person.sql"
@@ -49,7 +53,6 @@ class ILUTReport():
         self.hh_sql_noAV = "theme_hh_noAV.sql"
         self.triptour_sql_noAV = "theme_triptour_VMTConstants.sql" 
         self.triptour_sql_yesAV = "theme_triptour_VMTConstants.sql" #for now, AV/No AV is using the same trip tour script
-        
         self.cvixxi_sql = "theme_cveh_ixxi.sql"
         
         self.mix_density_sql1 = "mix_density_pt1.sql"
@@ -63,31 +66,25 @@ class ILUTReport():
             2:["No AV, Yes TNC", self.triptour_sql_noAV, self.hh_sql_noAV],
             3:["Both AV and TNC", self.triptour_sql_yesAV, self.hh_sql_yesAV]}
         
-        
-        # =========parameters that change with every run================= 
+        # model run folder
         self.model_run_dir = model_run_dir
-        
-        # if names are pre-entered for parcel and population tables, confirm they
-        # exist in SQL Server. IF they don't, have the user enter the names manually
-        if envision_tomorrow_tbl:
-            if self.check_if_table_exists(envision_tomorrow_tbl):
-                self.envision_tomorrow_tbl = envision_tomorrow_tbl
-            else:
-                self.envision_tomorrow_tbl = \
-                    self.conditional_table_entry(f"Parcel/ETO table {self.envision_tomorrow_tbl}" \
-                                                 " not found. Please manually enter name: ")
-        else: 
-            self.envision_tomorrow_tbl = self.conditional_table_entry("Enter future parcel/ETO table name: ")
-            
-        if pop_table:
-            if self.check_if_table_exists(pop_table):
-                self.pop_table = pop_table
-            else:
-                self.pop_table = \
-                    self.conditional_table_entry(f"Population table {self.pop_table}" \
-                                                 " not found. Please manually enter it: ")
-        else:
-            self.pop_table = self.conditional_table_entry("Copy/paste population table name")  
+
+        # confirm that needed input tables are in the database
+        tbls_to_check = {self.envision_tomorrow_tbl: "Envision Tomorrow parcel table",
+                        self.pop_table: "Population table", 
+                        self.taz_rad_table: "TAZ-RAD table", 
+                        self.master_parcel_table: "Master parcel table"}
+
+        for tblname, tbl_desc in tbls_to_check.items():
+            if tblname:
+                if self.check_if_table_exists(tblname):
+                    continue # if user specified a table, and the table is in the db, then all good and you can move on to check next table
+                else: # if the user-specified table isn't found, let them know and give a chance to re-enter manually.
+                    self.conditional_table_entry(f"Table {tblname} not found in database {self.database}. " \
+                                                "Please manually enter name or press ctrl+c to exit")
+            else: # if a table wasn't specified ahead of time, have user specify it.
+                tblname = self.conditional_table_entry(f"Specify table you are using for {tbl_desc} or press ctrl+c to exit")
+
             
         # scenario year
         if sc_yr:
@@ -117,7 +114,6 @@ class ILUTReport():
         
         self.av_tnc_type = int(self.av_tnc_type)
         self.scenario_extn = "{}_{}".format(self.sc_yr, self.sc_code)
-        # import pdb; pdb.set_trace()
         
 
     def check_if_table_exists(self, table_name):
@@ -250,6 +246,7 @@ class ILUTReport():
             hh_params = [self.pop_table, raw_hh, raw_parcel,hh_outtbl]
             self.run_sql(hh_sql,hh_params)
             
+        # create comm veh ixxi table
         if create_cvixxi_table:
             cvixxi_params = [raw_parcel, raw_cveh, self.taz_rad_table, 
                              raw_hh, raw_ixxi, cvixxi_outtbl]
@@ -262,7 +259,7 @@ class ILUTReport():
         if create_comb_table:
             if len(tables_existing) == 4: #check that all ilut tables exist before creating combo table
                 col_str_yr = str(self.sc_yr)[-2:] #for columns in ETO table with year suffix in header name
-                comb_outtbl = "mtpuser.ilut_combined{}".format(self.scenario_extn)
+                comb_outtbl = "ilut_combined{}".format(self.scenario_extn)
                 comb_params = [self.master_parcel_table, raw_parcel, hh_outtbl, 
                                person_outtbl, triptour_outtbl, cvixxi_outtbl, 
                                comb_outtbl, self.envision_tomorrow_tbl, col_str_yr]
@@ -286,14 +283,14 @@ class ILUTReport():
 
 
 if __name__ == '__main__':
-    report_obj = ILUTReport(model_run_dir = r'D:\SACSIM19\MTP2020\MTP_Amendment\FixDELCURV\2035_baseline\run_2035_MTIP_Amd1_Baseline_v2',
-        envision_tomorrow_tbl='raw_eto2035_latest', pop_table='raw_Pop2035_latest', sc_yr=2035,
-                 sc_code=212, av_tnc_type=1, 
-                 sc_desc='Uses inputs from 2035_209 with base net updated to reflect minor fixes after 2020 MTIP amendment')
-    report_obj.run_report(create_triptour_table = True,
-                    create_person_table = True,
-                    create_hh_table = True,
+    report_obj = ILUTReport(model_run_dir = r'D:\SACSIM19\MTP2020\2016_UpdatedAug2020\run_2016_baseline_AO13_V7_NetUpdate08202020',
+        dbname='MTP2024', envision_tomorrow_tbl='raw_eto2016_latest', pop_table='raw_Pop2016_latest', sc_yr=2016,
+                 sc_code=999, av_tnc_type=1, 
+                 sc_desc='testing')
+    report_obj.run_report(create_triptour_table = False,
+                    create_person_table = False,
+                    create_hh_table = False,
                     create_cvixxi_table = True,
-                    create_comb_table = True)
+                    create_comb_table = False)
 
 
