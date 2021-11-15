@@ -24,8 +24,9 @@ import pyodbc
 #===================================FUNCTIONS================================
 class ILUTReport():
 
-    def __init__(self, model_run_dir, dbname, envision_tomorrow_tbl=None, pop_table=None, sc_yr=None,
-                 sc_code=None, av_tnc_type=None, sc_desc=None):
+    def __init__(self, model_run_dir, dbname, envision_tomorrow_tbl=None, pop_table=None, 
+                taz_rad_tbl=None, master_pcl_tbl=None,
+                sc_yr=None, sc_code=None, av_tnc_type=None, sc_desc=None):
         
         # ========parameters that are unlikely to change or are changed rarely======
         self.driver = '{SQL Server}'
@@ -37,11 +38,16 @@ class ILUTReport():
         self.scen_log_tbl = "ilut_scenario_log" #logs each run made and asks user for scenario description
         
         #sql script directory
+        os.chdir(os.path.dirname(__file__)) # ensure that you start in same folder as script
         self.sql_dir = os.path.abspath("sql_ilut_summary")
         
         #Tables that aren't scenario-dependent
-        self.master_parcel_table = "mtpuser.PARCEL_MASTER"
-        self.taz_rad_table = "TAZ07_RAD07"
+        self.master_parcel_table = master_pcl_tbl
+        self.taz_rad_table = taz_rad_tbl
+
+        # Tables that vary with scenario
+        self.envision_tomorrow_tbl = envision_tomorrow_tbl
+        self.pop_table = pop_table
         
         # Specify theme table queries to execute
         self.person_sql = "theme_person.sql"
@@ -66,7 +72,24 @@ class ILUTReport():
         
         # =========parameters that change with every run================= 
         self.model_run_dir = model_run_dir
+
+        # confirm that all needed input tables are in the database
+        tbls_to_check = {self.envision_tomorrow_tbl: "Envision Tomorrow parcel table",
+                        self.pop_table: "Population table", 
+                        self.taz_rad_table: "TAZ-RAD table", 
+                        self.master_parcel_table: "Master parcel table"}
+
+        for tblname, tbl_desc in tbls_to_check.items():
+            if tblname:
+                if self.check_if_table_exists(tblname):
+                    continue # if user specified a table, and the table is in the db, then all good and you can move on to check next table
+                else:
+                    self.conditional_table_entry(f"Table {tblname} not found in database {self.database}. " \
+                                                "Please manually enter name or press ctrl+c to exit")
+            else:
+                tblname = self.conditional_table_entry(f"Specify table you are using for {tbl_desc} or press ctrl+c to exit")
         
+        """ 
         # if names are pre-entered for parcel and population tables, confirm they
         # exist in SQL Server. IF they don't, have the user enter the names manually
         if envision_tomorrow_tbl:
@@ -88,6 +111,7 @@ class ILUTReport():
                                                  " not found. Please manually enter it: ")
         else:
             self.pop_table = self.conditional_table_entry("Copy/paste population table name")  
+         """
             
         # scenario year
         if sc_yr:
@@ -262,7 +286,7 @@ class ILUTReport():
         if create_comb_table:
             if len(tables_existing) == 4: #check that all ilut tables exist before creating combo table
                 col_str_yr = str(self.sc_yr)[-2:] #for columns in ETO table with year suffix in header name
-                comb_outtbl = "mtpuser.ilut_combined{}".format(self.scenario_extn)
+                comb_outtbl = "ilut_combined{}".format(self.scenario_extn)
                 comb_params = [self.master_parcel_table, raw_parcel, hh_outtbl, 
                                person_outtbl, triptour_outtbl, cvixxi_outtbl, 
                                comb_outtbl, self.envision_tomorrow_tbl, col_str_yr]
@@ -286,8 +310,8 @@ class ILUTReport():
 
 
 if __name__ == '__main__':
-    report_obj = ILUTReport(model_run_dir = r'\\win10-you\E\SACSIM19\PEP_testing\With_or_noProject\Bus80\With_project\BUS80_withPro_RS1234',
-        dbname='MTP2024', envision_tomorrow_tbl='raw_eto2040_latest', pop_table='raw_Pop2040_latest', sc_yr=2040,
+    report_obj = ILUTReport(model_run_dir = r'D:\SACSIM19\MTP2020\2016_UpdatedAug2020\run_2016_baseline_AO13_V7_NetUpdate08202020',
+        dbname='MTP2024', envision_tomorrow_tbl='raw_eto2016_latest', pop_table='raw_Pop2016_latest', sc_yr=2016,
                  sc_code=999, av_tnc_type=1, 
                  sc_desc='testing')
     report_obj.run_report(create_triptour_table = False,
