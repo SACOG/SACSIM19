@@ -59,7 +59,7 @@ if __name__ == '__main__':
     query_dir = os.path.abspath("sql_bcp") # subfolder with sql scripts
     
     sql_server_name = 'SQL-SVR'
-    ilut_db_name = 'MTP2024'
+    ilut_db_name = 'MTP2020' # 'MTP2020'
     
     # in table names, base year and earlier is usually written as 4-digit year, while for future years its
     # writted as "pa<two-digit year"
