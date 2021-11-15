@@ -171,20 +171,6 @@ if __name__ == '__main__':
         comb_rpt = ILUTReport(model_run_dir=model_run_folder, dbname=ilut_db_name, sc_yr=scenario_year, 
                               sc_code=scenario_id, envision_tomorrow_tbl=eto_tbl,
                               pop_table=popn_tbl, taz_rad_tbl=taz_tbl, master_pcl_tbl=master_parcel_table)
-        
-        """ 
-        # make sure population and envision tomorrow tables indicated above actually exist in DB
-        eto_tbl_exists = comb_rpt.check_if_table_exists(eto_tbl)
-        popn_tbl_exists = comb_rpt.check_if_table_exists(popn_tbl)
-        
-        if eto_tbl_exists and popn_tbl_exists:
-            pass
-        else:
-            raise Exception("Envision Tomorrow and population tables not found. " \
-                            "Confirm that the envision tomorrow table and population " \
-                            "table names are spelled correctly and are in SQL Server.")
-         """
-        
     else:
         pass
         print("Loading model output tables but will NOT run ILUT combination process...\n")

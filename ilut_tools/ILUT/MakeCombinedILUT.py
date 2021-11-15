@@ -41,11 +41,9 @@ class ILUTReport():
         os.chdir(os.path.dirname(__file__)) # ensure that you start in same folder as script
         self.sql_dir = os.path.abspath("sql_ilut_summary")
         
-        #Tables that aren't scenario-dependent
+        #Tables that don't come from model-run folder
         self.master_parcel_table = master_pcl_tbl
         self.taz_rad_table = taz_rad_tbl
-
-        # Tables that vary with scenario
         self.envision_tomorrow_tbl = envision_tomorrow_tbl
         self.pop_table = pop_table
         
@@ -55,7 +53,6 @@ class ILUTReport():
         self.hh_sql_noAV = "theme_hh_noAV.sql"
         self.triptour_sql_noAV = "theme_triptour_VMTConstants.sql" 
         self.triptour_sql_yesAV = "theme_triptour_VMTConstants.sql" #for now, AV/No AV is using the same trip tour script
-        
         self.cvixxi_sql = "theme_cveh_ixxi.sql"
         
         self.mix_density_sql1 = "mix_density_pt1.sql"
@@ -69,11 +66,10 @@ class ILUTReport():
             2:["No AV, Yes TNC", self.triptour_sql_noAV, self.hh_sql_noAV],
             3:["Both AV and TNC", self.triptour_sql_yesAV, self.hh_sql_yesAV]}
         
-        
-        # =========parameters that change with every run================= 
+        # model run folder
         self.model_run_dir = model_run_dir
 
-        # confirm that all needed input tables are in the database
+        # confirm that needed input tables are in the database
         tbls_to_check = {self.envision_tomorrow_tbl: "Envision Tomorrow parcel table",
                         self.pop_table: "Population table", 
                         self.taz_rad_table: "TAZ-RAD table", 
@@ -83,35 +79,12 @@ class ILUTReport():
             if tblname:
                 if self.check_if_table_exists(tblname):
                     continue # if user specified a table, and the table is in the db, then all good and you can move on to check next table
-                else:
+                else: # if the user-specified table isn't found, let them know and give a chance to re-enter manually.
                     self.conditional_table_entry(f"Table {tblname} not found in database {self.database}. " \
                                                 "Please manually enter name or press ctrl+c to exit")
-            else:
+            else: # if a table wasn't specified ahead of time, have user specify it.
                 tblname = self.conditional_table_entry(f"Specify table you are using for {tbl_desc} or press ctrl+c to exit")
-        
-        """ 
-        # if names are pre-entered for parcel and population tables, confirm they
-        # exist in SQL Server. IF they don't, have the user enter the names manually
-        if envision_tomorrow_tbl:
-            if self.check_if_table_exists(envision_tomorrow_tbl):
-                self.envision_tomorrow_tbl = envision_tomorrow_tbl
-            else:
-                self.envision_tomorrow_tbl = \
-                    self.conditional_table_entry(f"Parcel/ETO table {self.envision_tomorrow_tbl}" \
-                                                 " not found. Please manually enter name: ")
-        else: 
-            self.envision_tomorrow_tbl = self.conditional_table_entry("Enter future parcel/ETO table name: ")
-            
-        if pop_table:
-            if self.check_if_table_exists(pop_table):
-                self.pop_table = pop_table
-            else:
-                self.pop_table = \
-                    self.conditional_table_entry(f"Population table {self.pop_table}" \
-                                                 " not found. Please manually enter it: ")
-        else:
-            self.pop_table = self.conditional_table_entry("Copy/paste population table name")  
-         """
+
             
         # scenario year
         if sc_yr:
