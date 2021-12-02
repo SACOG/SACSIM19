@@ -194,6 +194,11 @@ def pair_check(in_node_pair, master_list):
 
 
 def check_tranlinks(tranline_txt_file, hwylink_dbf, check_for_wrongways=False):
+
+    modeid_rail = 1
+    modeid_expbus = 2
+    modeid_locbus = 3
+
     #linkrows = list of lists; each list containing line-level attributes for transit routes
     #noderows = list of lists; each list is a node within each line with some line-level attributes
     print("loading transit line data...")
@@ -205,13 +210,13 @@ def check_tranlinks(tranline_txt_file, hwylink_dbf, check_for_wrongways=False):
     # {line name: line mode (1=rail, 2=exp bus, 3=local bus)}
     line_mode_dict = {row[0]: int(row[3]) for row in linkrows}
     
-    # {line name: [list of nodes] if line mode != 1}
+    # {line name: [list of nodes] if line mode != modeid_rail}
     line_nodes_dict = {}
     
     for row in noderows:
         line_name = row[0]
         node_id = abs(int(row[1])) # must be positive number since all hwy node IDs are positive
-        if line_mode_dict[line_name] > 1: # only check transit node pairs that are on bus lines, which use hwy net
+        if line_mode_dict[line_name] != modeid_rail: # only check transit node pairs that are on bus lines, which use hwy net
             if line_nodes_dict.get(line_name) is None:
                 line_nodes_dict[line_name] = [node_id]
             else:
@@ -263,8 +268,10 @@ if __name__ == '__main__':
     df_out = check_tranlinks(tranline_in, network_links_dbf, check_for_wrongways=flag_wrong_ways)
     df_out.to_csv(out_csv, index=False)
 
-    print(f"""Success! Output CSV is {out_csv}.
-        \n Note that Amtrak rail lines, due to having the mode tag of commute buses,
-        will erroneously show up as having links in the highway network. You can IGNORE
-        these flags as they are not actually missing. Rail links are stored in the transit_links.csv file.""")
+    end_msg = f"""Success! Output CSV is {out_csv}.
+        \nNote that Amtrak rail lines (whose names start with AMTR or ZF_AMTR), due to having the mode tag of commute buses,
+        will erroneously show up as missing links in the highway network. You can IGNORE
+        these flags as they are not actually missing. Rail links are stored in the transit_links.csv file."""
+
+    print(end_msg)
     # import pdb; pdb.set_trace()
