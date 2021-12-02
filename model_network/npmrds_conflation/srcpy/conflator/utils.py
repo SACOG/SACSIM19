@@ -70,3 +70,12 @@ def set_field_value(fl, field, set_val, srch_qry=None):
         for row in ucur:
             row[0] = set_val
             ucur.updateRow(row)
+
+# def update_model_ab_field(fc_in, a_fld, b_fld, ab_fld):
+#     with arcpy.da.UpdateCursor(fc_in, [a_fld, b_fld, ab_fld]) as ucur:
+#         for row in ucur:
+#             node_a = row[0]
+#             node_b = row[1]
+#             a_b = f"{node_a}_{node_b}"
+#             row[2] = a_b
+#             ucur.updateRow(row)

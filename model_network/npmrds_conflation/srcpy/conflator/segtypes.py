@@ -158,21 +158,21 @@ class stickBall(lineSegs):
         If there is not, it adds one. 
         CONSIDER making this happen no matter what, since sometimes the A_B field will have duplicate values
         if user does not run field calculation in Cube
-         """
+        """
         link_fields = [f.name for f in arcpy.ListFields(self.fc_in)]
         # import pdb;pdb.set_trace()
         if self.fld_join not in link_fields:
             print(f"{self.fld_join} does not exist, so it's being added to enable joining...")
-            
             arcpy.AddField_management(self.fc_in, self.fld_join, "TEXT")
-            with arcpy.da.UpdateCursor(self.fc_in, [self.fld_anode, self.fld_bnode, self.fld_join]) as ucur:
-                for row in ucur:
-                    anode = row[0]
-                    bnode = row[1]
-                    jnkey = f"{anode}_{bnode}"
+            
+        with arcpy.da.UpdateCursor(self.fc_in, [self.fld_anode, self.fld_bnode, self.fld_join]) as ucur:
+            for row in ucur:
+                anode = row[0]
+                bnode = row[1]
+                jnkey = f"{anode}_{bnode}"
 
-                    row[2] = jnkey
-                    ucur.updateRow(row)
+                row[2] = jnkey
+                ucur.updateRow(row)
 
     def make_linkcopy_prj(self):
         """ Make make temporary copy of input links with desired fields using a projection,
@@ -240,7 +240,3 @@ if __name__ == '__main__':
     #     fld_dir_sign=)
 
     # import pdb; pdb.set_trace()
-
-
-    # %%
-    dir(sbt)

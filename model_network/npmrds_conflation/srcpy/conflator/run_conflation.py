@@ -19,6 +19,7 @@ import pandas as pd
 
 import segtypes
 from conflation import conflation
+import utils
 
 # #%%
 if __name__ == '__main__':
