@@ -24,13 +24,13 @@ import utils
 # #%%
 if __name__ == '__main__':
     # =============INPUT PARAMETERS=========================
-    output_fgdb = r"Q:\SACSIM23\Network\SM23GIS\SM23GIS.gdb"
+    output_fgdb = r"Q:\SACSIM23\Network\SM23GIS\SM23Testing.gdb" # r"Q:\SACSIM23\Network\SM23GIS\SM23GIS.gdb"
 
     #stick-ball input parameters
     calc_dirn_data = False # whether to calculate cardinal angles for model links. if unsure whether links already have field with this, set to True.
 
     # file path to SHP or feature class of stick-ball links (e.g. SACSIM links)
-    sacsim_links = r"Q:\SACSIM23\Network\SM23GIS\MN_link_forConflation_YZ\MN_Link_1109.shp" # r"Q:\SACSIM19\2020MTP\highway\network update\NetworkGIS\SHP\Link\masterSM19ProjCoding_10022020.shp"
+    sacsim_links = r"Q:\SACSIM23\Network\SM23GIS\MN_link_forConflation_YZ\MN_Link_1109.shp" # r"Q:\SACSIM23\Network\SM23GIS\SM23Testing.gdb\sm23_diagonalsTEST"
     
     sacsim_capc = 'CAPC20' # 'CAPCLASS' # SACSIM capacity class field name.
     sacsim_fwys = [1] # SACSIM capclasses that are on freeways: 1 = mainline freeways; 8 = HOV lanes, 16 = freeway-to-freeway connectors--though these arguably should be ramps
@@ -46,7 +46,7 @@ if __name__ == '__main__':
     #true-shape input parameters for INRIX TMC SHP 
 
     # file path to SHP or feature class of stick-ball links (e.g. SACSIM links)
-    trueshp_links = r"Q:\SACSIM23\Network\SM23GIS\SM23GIS.gdb\INRIX_SHP_2020_2021_SACOG"
+    trueshp_links = r"Q:\SACSIM23\Network\SM23GIS\SM23GIS.gdb\INRIX_SHP_2020_2021_SACOG" # r'Q:\SACSIM23\Network\SM23GIS\SM23Testing.gdb\inrix_diagonalsTEST'  # 
 
     trueshp_linkid = 'Tmc' # unique identifier field
     trueshp_dirn_field = 'c_textdirn' # field with abbreviated N/S/E/W direction tag. If unsure if the layer has one, set to None, which will add and calculate (or re-calculate if exists) the value

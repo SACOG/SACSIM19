@@ -176,9 +176,11 @@ class conflation:
         arcpy.SelectLayerByAttribute_management(self.fl_output_final, "NEW_SELECTION", sql_taggable_sblinks)
         
         
-        modlink_ucur_fields = [self.links_stickball.fld_func_class, self.links_stickball.fld_join,
-                                self.links_stickball.fld_c_angle, self.links_trueshp.fld_linkid, 
-                                self.fld_searchdist]
+        # modlink_ucur_fields = [self.links_stickball.fld_func_class, self.links_stickball.fld_join,
+        #                         self.links_stickball.fld_c_angle, self.links_trueshp.fld_linkid, 
+        #                         self.fld_searchdist]
+
+        modlink_ucur_fields = [f.name for f in arcpy.ListFields(self.fl_output_final)]
         
         # return list of true/false flags indicating if each of the fields is in the output feature class from spatial_join_2()
         missing_fields = [fname for fname in modlink_ucur_fields if not utils.field_in_fc(fname, self.fl_output_final)]
@@ -194,7 +196,6 @@ class conflation:
         link_cnt = 0 # counter for how many links get data added to them
         links_to_process = arcpy.GetCount_management(self.fl_output_final)
         with arcpy.da.UpdateCursor(self.fl_output_final, modlink_ucur_fields, sql_taggable_sblinks) as ucur:
-            
             for row in ucur:
                 # Get link direction and road cat
                 capc = row[modlink_ucur_fields.index(self.links_stickball.fld_func_class)]
@@ -234,7 +235,10 @@ class conflation:
                 # Then subselect again for TMC that has cardinal angle that is < X degrees different from the model link's angle
                 trueshp_samedir = [] # list of TMCs that have close direction to the model link being considered.
                 flds_trueshp = [self.links_trueshp.fld_linkid, self.links_trueshp.fld_rdname, self.links_trueshp.fld_dir_sign, 
-                            self.links_trueshp.fld_func_class, self.links_trueshp.fld_seg_len, fld_geom]
+                            self.links_trueshp.fld_func_class, self.links_trueshp.fld_seg_len, 
+                            fld_geom] + self.links_trueshp.extra_fields
+
+                df_col_dist = 'distance' # distance from TMC to the model link centroid
 
                 with arcpy.da.SearchCursor(self.links_trueshp.fl_trueshps, flds_trueshp) as cur:
                     for trueshp_row in cur:
@@ -246,20 +250,23 @@ class conflation:
                         trueshp_angle = utils.get_angle(trueshp_geom)
                         
                         dist_to_linkcentr =  trueshp_geom.distanceTo(centr_geom) # distance from model link centroid to closest point of TMC
-                        # dist_to_linkcentr2 = get_nearest_distance(tmc_geom, centr_geom)
+                        
+                        # import pdb; pdb.set_trace()
+                        d_keys = [f for f in flds_trueshp if f != fld_geom]
+                        d_for_row = {f: trueshp_row[flds_trueshp.index(f)] for f in d_keys}
+                        d_for_row.update({df_col_dist: dist_to_linkcentr})
                         
                         if abs(modlink_angle - trueshp_angle) < angle_diff_tol:
-                            trueshp_samedir.append((trueshp, trueshplen, dist_to_linkcentr))
+                            trueshp_samedir.append(d_for_row)
             
                 # if no TMCs are nearby, same direction, and same road type, then skip and go to the next row in the model link file
                 if len(trueshp_samedir) < 1:
                     continue
                 
                 # make dataframe of TMCs that are nearby, same direction, and same road type
-                df_col_dist = 'distance' # distance from TMC to the model link centroid
-                
                 # get TMC(s) that are closest to the model link's centroid
-                df_himatch = pd.DataFrame.from_records(trueshp_samedir, columns=[self.links_trueshp.fld_linkid, self.links_trueshp.fld_seg_len, df_col_dist])
+                # df_himatch = pd.DataFrame.from_records(trueshp_samedir, columns=[self.links_trueshp.fld_linkid, self.links_trueshp.fld_seg_len, df_col_dist])
+                df_himatch = pd.DataFrame(trueshp_samedir)
                 df_himatch = df_himatch.loc[df_himatch[df_col_dist] == df_himatch[df_col_dist].min()]
                 
                 # if more than 1 TMC ties for being closest to the model link centroid, then choose the one with longer length
@@ -275,10 +282,15 @@ class conflation:
                         
                 # return the TMC id of the TMC that is same direction, same road type, and closest to the centroid of the model link.
                 # this will be the TMC whose info you conflate to the model link.
-                closest_trueshp = df_himatch.iloc[0][self.links_trueshp.fld_linkid]
+                # closest_trueshp = df_himatch.iloc[0][self.links_trueshp.fld_linkid]
                 
                 # Set the model link's TMC value to be closest_trueshp
-                row[modlink_ucur_fields.index(self.links_trueshp.fld_linkid)] = closest_trueshp
+                # import pdb; pdb.set_trace()
+                # row[modlink_ucur_fields.index(self.links_trueshp.fld_linkid)] = closest_trueshp
+                for df_field in list(df_himatch.columns):
+                    if df_field in modlink_ucur_fields:
+                        row[modlink_ucur_fields.index(df_field)] = df_himatch.iloc[0][df_field]
+                
                 ucur.updateRow(row)
 
                 link_cnt += 1
