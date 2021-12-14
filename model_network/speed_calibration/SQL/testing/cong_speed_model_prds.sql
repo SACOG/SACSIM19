@@ -16,11 +16,9 @@ GO
 
 --list of weekdays
 DECLARE @weekdays TABLE (day_name VARCHAR(9))
-	INSERT INTO @weekdays VALUES ('Monday')
 	INSERT INTO @weekdays VALUES ('Tuesday')
 	INSERT INTO @weekdays VALUES ('Wednesday')
 	INSERT INTO @weekdays VALUES ('Thursday')
-	INSERT INTO @weekdays VALUES ('Friday')
 
 
 SELECT

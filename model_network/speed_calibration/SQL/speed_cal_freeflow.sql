@@ -54,6 +54,8 @@ SELECT
 	COUNT(*) AS epoch_cnt10p4a
 INTO #ffs_ovngt_avg
 FROM npmrds_2019_alltmc_paxveh tt
+	WHERE DATEPART(hh, tt.measurement_tstamp) >= 22
+		OR DATEPART(hh, tt.measurement_tstamp) < 4
 GROUP BY tt.tmc_code
 
 SELECT
