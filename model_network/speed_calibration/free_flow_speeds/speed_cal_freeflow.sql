@@ -17,8 +17,7 @@ Copyright:   (c) SACOG
 SQL Flavor: SQL Server
 */
 
-USE NPMRDS
-GO
+SET NOCOUNT ON --
 
 --==============DEFINITION 1 and 2: PPA FREE-FLOW SPEED DEFINITION ("85/60")======================
 -- Get PPA free-flow definition: 85th percentile for freeways, 60th percentile for arterials,
@@ -38,8 +37,8 @@ SELECT
 		OVER (PARTITION BY tmc_code)
 		AS ffs_85 --just 85th percentile speed, for all roads
 INTO #ff_speed_pctls
-FROM npmrds_2019_all_tmcs_txt tmc
-	LEFT JOIN npmrds_2019_alltmc_paxtruck_comb tt
+FROM {0} tmc -- TMCs used for GIS mapping
+	LEFT JOIN {1} tt -- travel time data table
 		ON tmc.tmc = tt.tmc_code
 WHERE (DATEPART(hh,measurement_tstamp) >=20
 		OR DATEPART(hh,measurement_tstamp) < 6)
@@ -53,7 +52,7 @@ SELECT
 	COUNT(*) / SUM(1.0/tt.speed) AS avspd_10p4a,
 	COUNT(*) AS epoch_cnt10p4a
 INTO #ffs_ovngt_avg
-FROM npmrds_2019_alltmc_paxveh tt
+FROM {1} tt -- travel time data table
 	WHERE DATEPART(hh, tt.measurement_tstamp) >= 22
 		OR DATEPART(hh, tt.measurement_tstamp) < 4
 GROUP BY tt.tmc_code
@@ -62,22 +61,19 @@ SELECT
 	tmc_geomyr.tmc,
 	tmc_geomyr.road,
 	tmc_geomyr.f_system,
-	tmc_geomyr.Miles AS len_mi20,
-	tmc_spdyr.Miles AS len_mi17,
+	tmc_geomyr.Miles AS len_mi{3}, -- data year for TMCs
+	tmc_spdyr.Miles AS len_mi{2}, -- data year for the speed data
 	pctl.ffs_85th60th,
 	pctl.ffs_85,
 	av.avspd_10p4a,
 	av.epoch_cnt10p4a
-INTO #data_for_export
 FROM npmrds_2020_alltmc_txt tmc_geomyr
-	LEFT JOIN npmrds_2019_all_tmcs_txt tmc_spdyr
+	LEFT JOIN {4} tmc_spdyr -- tmc table for same data year as speed data
 		ON tmc_geomyr.tmc = tmc_spdyr.tmc
 	LEFT JOIN #ff_speed_pctls pctl
 		ON tmc_geomyr.tmc = pctl.tmc_code
 	LEFT JOIN #ffs_ovngt_avg av
 		ON tmc_geomyr.tmc = av.tmc_code
-
-SELECT  * FROM #data_for_export
 
 
 DROP TABLE #ff_speed_pctls; 
