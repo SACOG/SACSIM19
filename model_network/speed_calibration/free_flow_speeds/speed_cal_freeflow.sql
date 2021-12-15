@@ -61,13 +61,13 @@ SELECT
 	tmc_geomyr.tmc,
 	tmc_geomyr.road,
 	tmc_geomyr.f_system,
-	tmc_geomyr.Miles AS len_mi{3}, -- data year for TMCs
-	tmc_spdyr.Miles AS len_mi{2}, -- data year for the speed data
+	tmc_geomyr.Miles AS len_mi{2}, -- data year for TMCs
+	tmc_spdyr.Miles AS len_mi{3}, -- data year for the speed data
 	pctl.ffs_85th60th,
 	pctl.ffs_85,
 	av.avspd_10p4a,
 	av.epoch_cnt10p4a
-FROM npmrds_2020_alltmc_txt tmc_geomyr
+FROM {0} tmc_geomyr -- TMCs used for GIS mapping
 	LEFT JOIN {4} tmc_spdyr -- tmc table for same data year as speed data
 		ON tmc_geomyr.tmc = tmc_spdyr.tmc
 	LEFT JOIN #ff_speed_pctls pctl
