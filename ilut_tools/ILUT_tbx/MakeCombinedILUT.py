@@ -63,9 +63,15 @@ class ILUTReport():
         
         
         # Autonomous Vehicle (AV) and TNC (e.g. Uber/Lyft) assumptions used:
-        self.avmode_dict = {1:["No AV, No TNC", self.triptour_sql_noAV, self.hh_sql_noAV],
-            2:["No AV, Yes TNC", self.triptour_sql_noAV, self.hh_sql_noAV],
-            3:["Both AV and TNC", self.triptour_sql_yesAV, self.hh_sql_yesAV]}
+        self.avtnc_nn = "No AV, No TNC"
+        self.avtnc_ny = "No AV, Yes TNC"
+        self.avtnc_yy = "Both AV and TNC"
+
+        self.avmode_dict = {
+            self.avtnc_nn:[self.triptour_sql_noAV, self.hh_sql_noAV],
+            self.avtnc_ny:[self.triptour_sql_noAV, self.hh_sql_noAV],
+            self.avtnc_yy:[self.triptour_sql_yesAV, self.hh_sql_yesAV]
+            }
         
         # model run folder
         self.model_run_dir = model_run_dir
@@ -103,9 +109,7 @@ class ILUTReport():
         if av_tnc_type:
             self.av_tnc_type = av_tnc_type
         else: 
-            self.av_tnc_type = input("Enter '1' ({}), '2' ({}), or '3' ({}): " \
-                            .format(self.avmode_dict[1][0], self.avmode_dict[2][0],
-                                    self.avmode_dict[3][0]))
+            self.av_tnc_type = input(f"Enter '{self.avtnc_nn}', '{self.avtnc_ny}', '{self.avtnc_yy}': ")
                 
         # additional scenario description
         if sc_desc:
@@ -113,7 +117,7 @@ class ILUTReport():
         else:
             self.sc_desc = input("Enter scenario description (255 char limit): ") 
         
-        self.av_tnc_type = int(self.av_tnc_type)
+        # self.av_tnc_type = int(self.av_tnc_type)
         self.scenario_extn = "{}_{}".format(self.sc_yr, self.sc_code)
         
 
@@ -247,7 +251,7 @@ class ILUTReport():
         
         # create trip-tour theme table
         if create_triptour_table:
-            triptour_sql = self.avmode_dict[self.av_tnc_type][1]
+            triptour_sql = self.avmode_dict[self.av_tnc_type][0]
             triptour_params = [raw_trip, raw_tour, raw_hh, raw_person, raw_parcel, 
                                raw_ixworkerfraxn, triptour_outtbl]
             self.run_sql(triptour_sql,triptour_params) 
@@ -259,7 +263,7 @@ class ILUTReport():
         
         #create hh theme table
         if create_hh_table:
-            hh_sql = self.avmode_dict[self.av_tnc_type][2]
+            hh_sql = self.avmode_dict[self.av_tnc_type][1]
             hh_params = [self.pop_table, raw_hh, raw_parcel,hh_outtbl]
             self.run_sql(hh_sql,hh_params)
             
@@ -285,8 +289,8 @@ class ILUTReport():
                 self.run_sql(self.mix_density_sql2,[raw_parcel]) #calculate mixed-density column on parcel file
                 self.run_sql(self.comb_sql, comb_params) #run script to combine all theme tables
                 
-                av_tnc_desc = self.avmode_dict[self.av_tnc_type][0]
-                self.log_run(av_tnc_desc)
+                # av_tnc_desc = self.avmode_dict[self.av_tnc_type][0]
+                self.log_run(self.av_tnc_type)
             else:
                 arcpy.AddMessage("Not all input ILUT tables exist. Make sure all theme ILUT tables exist then re-run.")
                 sys.exit()

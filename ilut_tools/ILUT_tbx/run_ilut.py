@@ -51,9 +51,10 @@ if __name__ == '__main__':
     model_run_folder = arcpy.GetParameterAsText(0) # r'D:\SACSIM19\MTP2020\Conformity_Runs\run_2035_MTIP_Amd1_Baseline_v1'
     scenario_year = int(arcpy.GetParameterAsText(1)) # 2035
     scenario_id = int(arcpy.GetParameterAsText(2)) # 999
-    scenario_desc = arcpy.GetParameterAsText(3) # string description of the scenario
-    run_ilut_combine = arcpy.GetParameterAsText(4) # boolean
-    remove_input_tables = arcpy.GetParameterAsText(5) # boolean; indicate if you want to only keep the resulting "ilut combined" table
+    av_tnc = arcpy.GetParameterAsText(3) # whether AVs or TNCs are assumed to be operating
+    scenario_desc = arcpy.GetParameterAsText(4) # string description of the scenario
+    run_ilut_combine = arcpy.GetParameterAsText(5) # boolean
+    remove_input_tables = arcpy.GetParameterAsText(6) # boolean; indicate if you want to only keep the resulting "ilut combined" table
 
     #=============SELDOM-CHANGED PARAMETERS==========================
     # folder containing query files used to create tables
@@ -178,7 +179,7 @@ if __name__ == '__main__':
         comb_rpt = ILUTReport(model_run_dir=model_run_folder, dbname=ilut_db_name, sc_yr=scenario_year, 
                               sc_code=scenario_id, envision_tomorrow_tbl=eto_tbl,
                               pop_table=popn_tbl, taz_rad_tbl=taz_tbl, master_pcl_tbl=master_parcel_table,
-                              sc_desc=scenario_desc)
+                              av_tnc_type=av_tnc, sc_desc=scenario_desc)
     else:
         pass
         arcpy.AddMessage("Loading model output tables but will NOT run ILUT combination process...\n")
@@ -187,7 +188,7 @@ if __name__ == '__main__':
     os.chdir(model_run_folder)
     
     tbl_loader = BCP(svr_name=sql_server_name, db_name=ilut_db_name)
-    
+    """     
     for tblspec in ilut_tbl_specs:
         if tblspec[k_load_tbl]:
             sql_tname = f"{tblspec[k_sql_tbl_name]}{scenario_year}_{scenario_id}"
@@ -205,10 +206,10 @@ if __name__ == '__main__':
         else:
             arcpy.AddMessage(f"Skipping loading of {tblspec[k_sql_tbl_name]} table...")
             continue
-        
+    """
     arcpy.AddMessage("All tables successfully loaded!\n")
     
-    if run_ilut_combine.lower() == 'y':
+    if run_ilut_combine:
         arcpy.AddMessage("Starting ILUT combining/aggregation process...\n")
         comb_rpt.run_report(delete_input_tables=remove_input_tables)
     
