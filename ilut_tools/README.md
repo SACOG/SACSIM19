@@ -2,7 +2,7 @@
 
 ## Contents
 * [Version Info](#Version-Info)
-* [What is the ILUT Tool?](#What-is-the-ilut-tool?)
+* [What is the ILUT Tool?](#What-is-the-ILUT-tool?)
 * [Software and Package Requirements](#Software-and-Package-Requirements)
 * [Preparing ILUT Inputs](#Preparing-ILUT-Inputs)
 * [Running the ILUT Tool](#Running-the-ILUT-Tool)
