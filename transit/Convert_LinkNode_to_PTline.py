@@ -13,11 +13,11 @@
 
 import os
 
-inputDir = r'Q:\SACSIM19\2020MTP\transit\Transit Model Inputs\2016\TranInputs2016_DirCombineJun2020\LinkNode_outputs'
-inputLink = '2016SM19PT_link_combdirs.txt'
-inputNode = 'nodes_out1297.0.txt'
+inputDir = r'Q:\SACSIM23\Network\Cube\TransitLIN\2007 TAZs\transit_linenode'
+inputLink = '2016_tranline_lines.txt'
+inputNode = '2016_tranline_nodes_TAZ21.txt'
 
-outputTranLine = '2016SM19_tranline_combdirs.txt'
+outputTranLine = '2016_tranline_TAZ21.lin'
 
 #=================BEGIN SCRIPT=======================
 
