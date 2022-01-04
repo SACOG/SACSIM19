@@ -23,16 +23,23 @@ Python Version: 3.x
 
 import os
 import datetime
+
+import arcpy
 import pandas as pd
+from dbfread import DBF
 from pandas.core.arrays import categorical
 
 from pandas_memory_optimization import memory_optimization
+from get_unc_path import build_unc_path
 
 
 class modelRunSummary:
-    def __init__(self, model_run_dir):
+    def __init__(self, model_run_dir, road_vmt_dbf=None, scenario_desc=""):
         
         self.model_run_dir = model_run_dir
+        self.road_vmt_dbf = road_vmt_dbf
+        self.scenario_year = self.get_year_from_prn()
+        self.scenario_desc = scenario_desc
 
         # trip table attributes
         self.in_trip_file = '_trip_1_1.csv' #trip table name
@@ -59,10 +66,15 @@ class modelRunSummary:
 
     def load_table(self, in_table, use_cols, delim_char=','):
         tbl_path = os.path.join(self.model_run_dir, in_table)
-        print(f"reading {tbl_path} into dataframe...")
+        arcpy.AddMessage(f"reading {tbl_path} into dataframe...")
         df = pd.read_csv(tbl_path, usecols=use_cols, delimiter=delim_char)
         memory_optimization(df)
         return df
+
+    def get_year_from_prn(self):
+        prn_file = [f for f in os.listdir(self.model_run_dir) if os.path.splitext(f)[1].lower() == '.prn'][0]
+        sc_year = prn_file[:4]
+        return sc_year
 
     def calc_res_vmt_paxcnt(self, vmt_col):
         """
@@ -84,12 +96,11 @@ class modelRunSummary:
         'DORP' (driver or passenger) way of calculating total residential VMT: 
         Only count the VMT if the DORP flag = 1, indicating the trip maker is the driver.
         In theory this is a better way of estimating actual vehicle trips.
-        """
 
+        NOTE - As of 1/4/2022, this method is not being used.
+        """
         total_vmt = self.df_trip.loc[self.df_trip[self.c_dorp] == 1][vmt_col] \
                     .sum()
-
-        #import pdb; pdb.set_trace()
 
         return total_vmt
 
@@ -97,36 +108,74 @@ class modelRunSummary:
         tot_hh_pop = self.df_hh[self.c_hhsize].sum()
         return tot_hh_pop
 
-    def get_mode_trip_shares(self, mode_val):
-        
+    def get_trips_x_mode(self, mode_val):
         mode_trips = self.df_trip.loc[self.df_trip[self.c_mode] == mode_val].shape[0]
-                     
         return mode_trips
+
+    def get_road_vmt(self):
+        """Get total roadway VMT and CVMT
+        Args:
+            road_vmt_dbf (DBF): DBF file of model links with daynet data
+        """
+        arcpy.AddMessage(f"reading in roadway VMT data from {self.road_vmt_dbf}...")
+        if len(self.road_vmt_dbf) > 1:
+            self.fld_day_vmt = 'DAYVMT'
+            self.fld_day_cvmt = 'DAYCVMT'
+            fields_to_use = [self.fld_day_vmt, self.fld_day_cvmt]
+
+            self.vmt_dbf_path = os.path.join(self.model_run_dir, self.road_vmt_dbf)
+
+            dbf_obj = DBF(self.vmt_dbf_path)
+            df = pd.DataFrame(iter(dbf_obj))[fields_to_use]
+
+            tot_vmt = df[self.fld_day_vmt].sum()
+            tot_cvmt = df[self.fld_day_cvmt].sum()
+        else:
+            tot_vmt = -1
+            tot_cvmt = -1
+
+        return (tot_vmt, tot_cvmt)
 
     def get_topline(self):
         tot_pop = self.calc_hh_pop()
         tot_restrips = self.df_trip.shape[0]
         tot_vmt_fracmethod = self.calc_res_vmt_paxcnt(self.c_distau)
-        tot_vmt_dorp = self.calc_res_vmt_dorp(self.c_distau)
         vmt_cap_frac = tot_vmt_fracmethod / tot_pop
-        vmt_cap_dorp = tot_vmt_dorp / tot_pop
+        
+        roadway_data = self.get_road_vmt()
+        road_vmt = roadway_data[0]
+        road_cvmt = roadway_data[1]
 
         modes = {1: "walk", 2:"bike", 3:"sov", 4:"hov2", 5: "hov3", 6: "transit", 8: "schoolbus"}
-        modenames = [n for n in modes.values()]
+        modenames = [f"{n}_trips" for n in modes.values()]
 
-        trips_x_mode = [self.get_mode_trip_shares(mode_id) for mode_id in modes.keys()]
+        trips_x_mode = [self.get_trips_x_mode(mode_id) for mode_id in modes.keys()]
 
         dict_trips_x_mode = dict(zip(modenames, trips_x_mode))
-         
+        
+        # import pdb; pdb.set_trace()
+        model_run_uncpath = build_unc_path(self.model_run_dir)
 
-        out_dict = {"tot_pop": tot_pop, "tot_vmt_fracmethod": tot_vmt_fracmethod,
-                    "tot_restrips": tot_restrips, "tot_vmt_dorp": tot_vmt_dorp,
-                    "vmt_cap_frac": vmt_cap_frac, "vmt_cap_dorp": vmt_cap_dorp}
+        out_dict = {"model_run_folder": model_run_uncpath,
+            "scenario_year": self.scenario_year, 
+            "scenario_desc": self.scenario_desc,
+            "tot_pop": tot_pop, 
+            "tot_vmt_fracmethod": tot_vmt_fracmethod,
+            "tot_restrips": tot_restrips, 
+            "tot_resvmt_percap": vmt_cap_frac,
+            "roadway_vmt": road_vmt, 
+            "roadway_cvmt": road_cvmt}
 
-        out_dict2 = out_dict.update(dict_trips_x_mode)
+        out_dict.update(dict_trips_x_mode)
+        
+        df = pd.DataFrame.from_dict(out_dict, orient='index')
 
-        for k, v in out_dict.items():
-            print(f"{k}: {v}")
+        csv_out = os.path.join(self.model_run_dir, f"{self.scenario_year}_toplinesummary.csv")
+        df.to_csv(csv_out)
+
+        return (df, csv_out)
+
+
 
 
 
@@ -134,14 +183,17 @@ class modelRunSummary:
 if __name__ == '__main__':
     #=======================USER-DEFINED INPUT PARAMETERS=========================
 
-    in_dir_root = input('Enter path to model run folder: ') # r'C:\SACSIM19\TransitTimefacTesting\MTP2020Am1_TFIncrease50pct' # 
-
+    in_dir_root = arcpy.GetParameterAsText(0)  # input('Enter path to model run folder: ')  # r'D:\SACSIM19\TranHeadwaySensitivityTest\TranHeadway_plus20pct' # r'C:\SACSIM19\TransitTimefacTesting\MTP2020Am1_TFIncrease50pct' 
+    roadway_data_dbf = arcpy.GetParameterAsText(1)  # input('Enter roadway VMT DBF (aka "daynet" DBF): ')  #2016daynet_vmt.dbf
+    sc_desc = arcpy.GetParameterAsText(2)  # input('Enter description of the scenario: ')
 
     #=========================WRITE OUT TO CSV===========================
     date_suffix = str(datetime.date.today().strftime('%Y%m%d'))
 
-    sumobj = modelRunSummary(in_dir_root)
-    sumobj.get_topline()
+    # model_run_dir, road_vmt_dbf=None, scenario_year=None, scenario_desc="")
+    sumobj = modelRunSummary(in_dir_root, road_vmt_dbf=roadway_data_dbf, scenario_desc=sc_desc)
+    result = sumobj.get_topline()
+    df = result[0]
+    print(df)
 
-
-    print("\nSuccess!")
+    arcpy.SetParameterAsText(3, result[1])
