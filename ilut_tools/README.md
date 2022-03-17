@@ -24,7 +24,7 @@ The ILUT table also contains fields like TAZ, census tract, county, and other ch
 
 1.  Go to the 'ILUT' folder
 
-2.  Open ilut.py script in interpreter (e.g. IDLE, PyCharm)
+2.  Open run_ilut.py script in interpreter (e.g. IDLE, PyCharm)
 
 3.  Run the script, entering parameters as prompted
 

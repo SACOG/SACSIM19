@@ -190,3 +190,7 @@ dmypy.json
 *.VAR
 *.PRJ
 *.BAK
+
+# VS Code files to ignore
+.vscode
+.code-workspace
