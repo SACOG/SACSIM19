@@ -1,0 +1,405 @@
+;Compare Loaded and Create Delta Network
+;Created Kyle Shipley
+;Last updated 8/14/18 - KS
+
+
+RUN PGM=NETWORK
+FILEI NETI[1] =  "I:\Projects\Kyle\2020MTP\SACSIM19_scripts\run_2016_AO13_nTNC\2016day_ghg_full model.net"
+FILEI NETI[2] =  "I:\Projects\Kyle\2020MTP\SACSIM19_scripts\run_2016_AO13_nTNC\Compare_w\run_2016_AO13_noTNC_newNet\2016day_ghg.net"
+
+;Call Reverse
+FILEI NETI[3] = "I:\Projects\Kyle\2020MTP\SACSIM19_scripts\run_2016_AO13_nTNC\2016day_ghg_full model.net"
+FILEI NETI[4] = "I:\Projects\Kyle\2020MTP\SACSIM19_scripts\run_2016_AO13_nTNC\Compare_w\run_2016_AO13_noTNC_newNet\2016day_ghg.net"
+
+FILEO NETO = "I:\Projects\Kyle\2020MTP\SACSIM19_scripts\run_2016_AO13_nTNC\Compare_w\run_2016_AO13_noTNC_newNet\2016_AO13_nTNC_Compare_Detail.net",
+     INCLUDE=A B,
+	 
+   DYV1 DYV2 DYVCHG ABSDYVCHG PRCDYVCHG,
+   DYVT1 DYVT2 DYVTCHG ABSDYVTCHG PRCDYVTCHG,
+   A3V1 A3V2 A3VCHG ABSA3VCHG PRCA3VCHG,
+   A3VT1 A3VT2 A3VTCHG ABSA3VTCHG PRCA3VTCHG,
+   MDV1 MDV2 MDVCHG ABSMDVCHG PRCMDVCHG,
+   MDVT1 MDVT2 MDVTCHG ABSMDVTCHG PRCMDVTCHG,
+   P3V1 P3V2 P3VCHG ABSP3VCHG PRCP3VCHG,
+   P3VT1 P3VT2 P3VTCHG ABSP3VTCHG PRCP3VTCHG,
+   EVV1 EVV2 EVVCHG ABSEVVCHG PRCEVVCHG,
+   EVVT1 EVVT2 EVVTCHG ABSEVVTCHG PRCEVVTCHG,
+   
+   VMT1 VMT2 VMTCHG ABSVMTCHG PRCVMTCHG,
+   VMTT1 VMTT2 VMTTCHG ABSVMTTCHG PRCVMTTCHG,
+   TIME1 TIME2 TIMECHG ABSTIMECHG PRCTIMECHG,
+   
+   H17V1 H17V2 H17VC ABSH17VC PRCH17VC,
+   H17VT1 H17VT2 H17VTC ABSH17VTC PRCH17VTC,
+   H08V1 H08V2 H08VC ABSH08VC PRCH08VC,
+   H08VT1 H08VT2 H08VTC ABSH08VTC PRCH08VTC,
+   H09V1 H09V2 H09VC ABSH09VC PRCH09VC,
+   H09VT1 H09VT2 H09VTC ABSH09VTC PRCH09VTC,
+   MD5V1 MD5V2 MD5VC ABSMD5VC PRCMD5VC,
+   MD5VT1 MD5VT2 MD5VTC ABSMD5VTC PRCMD5VTC,
+   H15V1 H15V2 H15VC ABSH15VC PRCH15VC,
+   H15VT1 H15VT2 H15VTC ABSH15VTC PRCH15VTC,
+   H16V1 H16V2 H16VC ABSH16VC PRCH16VC,
+   H16VT1 H16VT2 H16VTC ABSH16VTC PRCH16VTC,
+   H17V1 H17V2 H17VC ABSH17VC PRCH17VC,
+   H17VT1 H17VT2 H17VTC ABSH17VTC PRCH17VTC,
+   EV21 EV22 EV2C ABSEV2C PRCEV2C,
+   EV2T1 EV2T2 EV2TC ABSEV2TC PRCEV2TC,
+   N11V1 N11V2 N11VC ABSN11VC PRCN11VC,
+   N11VT1 N11VT2 N11VTC ABSN11VTC PRCN11VTC,
+   
+   H17VC1 H17VC2 H17VCC ABSH17VCC PRCH17VCC,
+   H17VCT1 H17VCT2 H17VCTC ABSH17VCTC PRCH17VCTC,
+   H08VC1 H08VC2 H08VCC ABSH08VCC PRCH08VCC,
+   H08VCT1 H08VCT2 H08VCTC ABSH08VCTC PRCH08VCTC,
+   H09VC1 H09VC2 H09VCC ABSH09VCC PRCH09VCC,
+   H09VCT1 H09VCT2 H09VCTC ABSH09VCTC PRCH09VCTC,
+   MD5VC1 MD5VC2 MD5VCC ABSMD5VCC PRCMD5VCC,
+   MD5VCT1 MD5VCT2 MD5VCTC ABSMD5VCTC PRCMD5VCTC,
+   H15VC1 H15VC2 H15VCC ABSH15VCC PRCH15VCC,
+   H15VCT1 H15VCT2 H15VCTC ABSH15VCTC PRCH15VCTC,
+   H16VC1 H16VC2 H16VCC ABSH16VCC PRCH16VCC,
+   H16VCT1 H16VCT2 H16VCTC ABSH16VCTC PRCH16VCTC,
+   H17VC1 H17VC2 H17VCC ABSH17VCC PRCH17VCC,
+   H17VCT1 H17VCT2 H17VCTC ABSH17VCTC PRCH17VCTC,
+   EV21 EV22 EV2C ABSEV2C PRCEV2C,
+   EV2T1 EV2T2 EV2TC ABSEV2TC PRCEV2TC,
+   N11VC1 N11VC2 N11VCC ABSN11VCC PRCN11VCC,
+   N11VCT1 N11VCT2 N11VCTC ABSN11VCTC PRCN11VCTC
+
+;convert reverse networks to calc link totals
+phase=input, filei=li.3
+_temp1=a
+a=b
+b=_temp1
+endphase
+			
+phase=input, filei=li.4
+_temp2=a
+a=b
+b=_temp2
+endphase	
+
+;Volume
+   ;Daily  
+   DYV1=LI.1.DYV ;volume on link in first input file
+   DYV2=LI.2.DYV ;volume on link in second input file
+   DYVCHG=(DYV2-DYV1) ;change in volume between the two files
+   ABSDYVCHG=ABS(DYV2-DYV1)
+   if (DYV1>0) PRCDYVCHG=DYVCHG/DYV1
+   
+   DYVT1=LI.1.DYV + LI.3.DYV
+   DYVT2=LI.2.DYV + LI.4.DYV
+   DYVTCHG=(DYVT2-DYVT1)
+   ABSDYVTCHG=ABS(DYVT2-DYVT1)
+   if (DYVT1>0) PRCDYVTCHG=DYVTCHG/DYVT1
+
+   ;Volume AM 3hr Period 
+   A3V1=LI.1.A3V ;volume on link in first input file
+   A3V2=LI.2.A3V ;volume on link in second input file
+   A3VCHG=(A3V2-A3V1) ;change in volume between the two files
+   ABSA3VCHG=ABS(A3V2-A3V1)
+   if (A3V1>0) PRCA3VCHG=A3VCHG/A3V1
+   
+   A3VT1=LI.1.A3V + LI.3.A3V
+   A3VT2=LI.2.A3V + LI.4.A3V
+   A3VTCHG=(A3VT2-A3VT1)
+   ABSA3VTCHG=ABS(A3VT2-A3VT1)
+   if (A3VT1>0) PRCA3VTCHG=A3VTCHG/A3VT1
+   
+   ;Volume Mid day Period 
+   MDV1=LI.1.MDV ;volume on link in first input file
+   MDV2=LI.2.MDV ;volume on link in second input file
+   MDVCHG=(MDV2-MDV1) ;change in volume between the two files
+   ABSMDVCHG=ABS(MDV2-MDV1)
+   if (MDV1>0) PRCMDVCHG=MDVCHG/MDV1
+   
+   MDVT1=LI.1.MDV + LI.3.MDV
+   MDVT2=LI.2.MDV + LI.4.MDV
+   MDVTCHG=(MDVT2-MDVT1)
+   ABSMDVTCHG=ABS(MDVT2-MDVT1)
+   if (MDVT1>0) PRCMDVTCHG=MDVTCHG/MDVT1
+   
+   ;Volume PM 3hr Period 
+   P3V1=LI.1.P3V ;volume on link in first input file
+   P3V2=LI.2.P3V ;volume on link in second input file
+   P3VCHG=(P3V2-P3V1) ;change in volume between the two files
+   ABSP3VCHG=ABS(P3V2-P3V1)
+   if (P3V1>0) PRCP3VCHG=P3VCHG/P3V1
+   
+   P3VT1=LI.1.P3V + LI.3.P3V
+   P3VT2=LI.2.P3V + LI.4.P3V
+   P3VTCHG=(P3VT2-P3VT1)
+   ABSP3VTCHG=ABS(P3VT2-P3VT1)
+   if (P3VT1>0) PRCP3VTCHG=P3VTCHG/P3VT1
+   
+   ;Volume Evening Period 
+   EVV1=LI.1.EVV ;volume on link in first input file
+   EVV2=LI.2.EVV ;volume on link in second input file
+   EVVCHG=(EVV2-EVV1) ;change in volume between the two files
+   ABSEVVCHG=ABS(EVV2-EVV1)
+   if (EVV1>0) PRCEVVCHG=EVVCHG/EVV1
+   
+   EVVT1=LI.1.EVV + LI.3.EVV
+   EVVT2=LI.2.EVV + LI.4.EVV
+   EVVTCHG=(EVVT2-EVVT1)
+   ABSEVVTCHG=ABS(EVVT2-EVVT1)
+   if (EVVT1>0) PRCEVVTCHG=EVVTCHG/EVVT1
+   
+;VMT
+   VMT1=LI.1.DAYVMT ;volume on link in first input file
+   VMT2=LI.2.DAYVMT ;volume on link in second input file
+   VMTCHG=(VMT2-VMT1) ;change in volume between the two files
+   ABSVMTCHG=ABS(VMT2-VMT1)
+   if (VMT1>0) PRCVMTCHG=VMTCHG/VMT1
+   
+   VMTT1=LI.1.DAYVMT + LI.3.DAYVMT
+   VMTT2=LI.2.DAYVMT + LI.4.DAYVMT
+   VMTTCHG=(VMTT2-VMTT1)
+   ABSVMTTCHG=ABS(VMTT2-VMTT1)
+   if (VMTT1>0) PRCVMTTCHG=VMTTCHG/VMTT1
+     
+;Time (link travel time change)
+   TIME1=LI.1.TIME_1
+   TIME2=LI.2.TIME_1
+   TIMECHG=(TIME1-TIME2)
+   ABSTIMECHG=ABS(TIME1-TIME2)
+   if (TIME1>0) PRCTIMECHG=TIMECHG/TIME1
+   
+;Volume 9 Periods
+   ;H07   am
+   H07V1=LI.1.H07V ;volume on link in first input file
+   H07V2=LI.2.H07V ;volume on link in second input file
+   H07VC=(H07V2-H07V1) ;change in volume between the two files
+   ABSH07VC=ABS(H07V2-H07V1)
+   if (H07V1>0) PRCH07VC=H07VC/H07V1
+   
+   H07VT1=LI.1.H07V + LI.3.H07V
+   H07VT2=LI.2.H07V + LI.4.H07V
+   H07VTC=(H07VT2-H07VT1)
+   ABSH07VTC=ABS(H07VT2-H07VT1)
+   if (H07VT1>0) PRCH07VTC=H07VTC/H07VT1
+
+   ;H08  am 
+   H08V1=LI.1.H08V ;volume on link in first input file
+   H08V2=LI.2.H08V ;volume on link in second input file
+   H08VC=(H08V2-H08V1) ;change in volume between the two files
+   ABSH08VC=ABS(H08V2-H08V1)
+   if (H08V1>0) PRCH08VC=H08VC/H08V1
+   
+   H08VT1=LI.1.H08V + LI.3.H08V
+   H08VT2=LI.2.H08V + LI.4.H08V
+   H08VTC=(H08VT2-H08VT1)
+   ABSH08VTC=ABS(H08VT2-H08VT1)
+   if (H08VT1>0) PRCH08VTC=H08VTC/H08VT1
+   
+   ;H09 am
+   H09V1=LI.1.H09V ;volume on link in first input file
+   H09V2=LI.2.H09V ;volume on link in second input file
+   H09VC=(H09V2-H09V1) ;change in volume between the two files
+   ABSH09VC=ABS(H09V2-H09V1)
+   if (H09V1>0) PRCH09VC=H09VC/H09V1
+   
+   H09VT1=LI.1.H09V + LI.3.H09V
+   H09VT2=LI.2.H09V + LI.4.H09V
+   H09VTC=(H09VT2-H09VT1)
+   ABSH09VTC=ABS(H09VT2-H09VT1)
+   if (H09VT1>0) PRCH09VTC=H09VTC/H09VT1
+
+   ;MD5 hours  
+   MD5V1=LI.1.MD5V ;volume on link in first input file
+   MD5V2=LI.2.MD5V ;volume on link in second input file
+   MD5VC=(MD5V2-MD5V1) ;change in volume between the two files
+   ABSMD5VC=ABS(MD5V2-MD5V1)
+   if (MD5V1>0) PRCMD5VC=MD5VC/MD5V1
+   
+   MD5VT1=LI.1.MD5V + LI.3.MD5V
+   MD5VT2=LI.2.MD5V + LI.4.MD5V
+   MD5VTC=(MD5VT2-MD5VT1)
+   ABSMD5VTC=ABS(MD5VT2-MD5VT1)
+   if (MD5VT1>0) PRCMD5VTC=MD5VTC/MD5VT1
+
+   ;H15 hour (3pm)  
+   H15V1=LI.1.H15V ;volume on link in first input file
+   H15V2=LI.2.H15V ;volume on link in second input file
+   H15VC=(H15V2-H15V1) ;change in volume between the two files
+   ABSH15VC=ABS(H15V2-H15V1)
+   if (H15V1>0) PRCH15VC=H15VC/H15V1
+   
+   H15VT1=LI.1.H15V + LI.3.H15V
+   H15VT2=LI.2.H15V + LI.4.H15V
+   H15VTC=(H15VT2-H15VT1)
+   ABSH15VTC=ABS(H15VT2-H15VT1)
+   if (H15VT1>0) PRCH15VTC=H15VTC/H15VT1
+
+   ;H16 hour (4pm)  
+   H16V1=LI.1.H16V ;volume on link in first input file
+   H16V2=LI.2.H16V ;volume on link in second input file
+   H16VC=(H16V2-H16V1) ;change in volume between the two files
+   ABSH16VC=ABS(H16V2-H16V1)
+   if (H16V1>0) PRCH16VC=H16VC/H16V1
+   
+   H16VT1=LI.1.H16V + LI.3.H16V
+   H16VT2=LI.2.H16V + LI.4.H16V
+   H16VTC=(H16VT2-H16VT1)
+   ABSH16VTC=ABS(H16VT2-H16VT1)
+   if (H16VT1>0) PRCH16VTC=H16VTC/H16VT1
+   
+   ;H17 hour (5pm)  
+   H17V1=LI.1.H17V ;volume on link in first input file
+   H17V2=LI.2.H17V ;volume on link in second input file
+   H17VC=(H17V2-H17V1) ;change in volume between the two files
+   ABSH17VC=ABS(H17V2-H17V1)
+   if (H17V1>0) PRCH17VC=H17VC/H17V1
+   
+   H17VT1=LI.1.H17V + LI.3.H17V
+   H17VT2=LI.2.H17V + LI.4.H17V
+   H17VTC=(H17VT2-H17VT1)
+   ABSH17VTC=ABS(H17VT2-H17VT1)
+   if (H17VT1>0) PRCH17VTC=H17VTC/H17VT1
+   
+   ;EV2 hours (6,7)  
+   EV2V1=LI.1.EV2V ;volume on link in first input file
+   EV2V2=LI.2.EV2V ;volume on link in second input file
+   EV2VC=(EV2V2-EV2V1) ;change in volume between the two files
+   ABSEV2VC=ABS(EV2V2-EV2V1)
+   if (EV2V1>0) PRCEV2VC=EV2VC/EV2V1
+   
+   EV2VT1=LI.1.EV2V + LI.3.EV2V
+   EV2VT2=LI.2.EV2V + LI.4.EV2V
+   EV2VTC=(EV2VT2-EV2VT1)
+   ABSEV2VTC=ABS(EV2VT2-EV2VT1)
+   if (EV2VT1>0) PRCEV2VTC=EV2VTC/EV2VT1
+   
+   ;N11 hours (8pm-6am)  
+   N11V1=LI.1.N11V ;volume on link in first input file
+   N11V2=LI.2.N11V ;volume on link in second input file
+   N11VC=(N11V2-N11V1) ;change in volume between the two files
+   ABSN11VC=ABS(N11V2-N11V1)
+   if (N11V1>0) PRCN11VC=N11VC/N11V1
+   
+   N11VT1=LI.1.N11V + LI.3.N11V
+   N11VT2=LI.2.N11V + LI.4.N11V
+   N11VTC=(N11VT2-N11VT1)
+   ABSN11VTC=ABS(N11VT2-N11VT1)
+   if (N11VT1>0) PRCN11VTC=N11VTC/N11VT1
+   
+;Volume/Capacity Ratios 9 Periods
+   ;H07   am
+   H07VC1=LI.1.H07VC ;Volume on link in first input file
+   H07VC2=LI.2.H07VC ;Volume on link in second input file
+   H07VCC=(H07VC2-H07VC1) ;change in Volume between the two files
+   ABSH07VCC=ABS(H07VC2-H07VC1)
+   if (H07VC1>0) PRCH07VCC=H07VCC/H07VC1
+   
+   H07VCT1=LI.1.H07VC + LI.3.H07VC
+   H07VCT2=LI.2.H07VC + LI.4.H07VC
+   H07VCTC=(H07VCT2-H07VCT1)
+   ABSH07VCTC=ABS(H07VCT2-H07VCT1)
+   if (H07VCT1>0) PRCH07VCTC=H07VCTC/H07VCT1
+
+   ;H08  am 
+   H08VC1=LI.1.H08VC ;Volume on link in first input file
+   H08VC2=LI.2.H08VC ;Volume on link in second input file
+   H08VCC=(H08VC2-H08VC1) ;change in Volume between the two files
+   ABSH08VCC=ABS(H08VC2-H08VC1)
+   if (H08VC1>0) PRCH08VCC=H08VCC/H08VC1
+   
+   H08VCT1=LI.1.H08VC + LI.3.H08VC
+   H08VCT2=LI.2.H08VC + LI.4.H08VC
+   H08VCTC=(H08VCT2-H08VCT1)
+   ABSH08VCTC=ABS(H08VCT2-H08VCT1)
+   if (H08VCT1>0) PRCH08VCTC=H08VCTC/H08VCT1
+   
+   ;H09 am
+   H09VC1=LI.1.H09VC ;Volume on link in first input file
+   H09VC2=LI.2.H09VC ;Volume on link in second input file
+   H09VCC=(H09VC2-H09VC1) ;change in Volume between the two files
+   ABSH09VCC=ABS(H09VC2-H09VC1)
+   if (H09VC1>0) PRCH09VCC=H09VCC/H09VC1
+   
+   H09VCT1=LI.1.H09VC + LI.3.H09VC
+   H09VCT2=LI.2.H09VC + LI.4.H09VC
+   H09VCTC=(H09VCT2-H09VCT1)
+   ABSH09VCTC=ABS(H09VCT2-H09VCT1)
+   if (H09VCT1>0) PRCH09VCTC=H09VCTC/H09VCT1
+
+   ;MD5 hours  
+   MD5VC1=LI.1.MD5VC ;Volume on link in first input file
+   MD5VC2=LI.2.MD5VC ;Volume on link in second input file
+   MD5VCC=(MD5VC2-MD5VC1) ;change in Volume between the two files
+   ABSMD5VCC=ABS(MD5VC2-MD5VC1)
+   if (MD5VC1>0) PRCMD5VCC=MD5VCC/MD5VC1
+   
+   MD5VCT1=LI.1.MD5VC + LI.3.MD5VC
+   MD5VCT2=LI.2.MD5VC + LI.4.MD5VC
+   MD5VCTC=(MD5VCT2-MD5VCT1)
+   ABSMD5VCTC=ABS(MD5VCT2-MD5VCT1)
+   if (MD5VCT1>0) PRCMD5VCTC=MD5VCTC/MD5VCT1
+
+   ;H15 hour (3pm)  
+   H15VC1=LI.1.H15VC ;Volume on link in first input file
+   H15VC2=LI.2.H15VC ;Volume on link in second input file
+   H15VCC=(H15VC2-H15VC1) ;change in Volume between the two files
+   ABSH15VCC=ABS(H15VC2-H15VC1)
+   if (H15VC1>0) PRCH15VCC=H15VCC/H15VC1
+   
+   H15VCT1=LI.1.H15VC + LI.3.H15VC
+   H15VCT2=LI.2.H15VC + LI.4.H15VC
+   H15VCTC=(H15VCT2-H15VCT1)
+   ABSH15VCTC=ABS(H15VCT2-H15VCT1)
+   if (H15VCT1>0) PRCH15VCTC=H15VCTC/H15VCT1
+
+   ;H16 hour (4pm)  
+   H16VC1=LI.1.H16VC ;Volume on link in first input file
+   H16VC2=LI.2.H16VC ;Volume on link in second input file
+   H16VCC=(H16VC2-H16VC1) ;change in Volume between the two files
+   ABSH16VCC=ABS(H16VC2-H16VC1)
+   if (H16VC1>0) PRCH16VCC=H16VCC/H16VC1
+   
+   H16VCT1=LI.1.H16VC + LI.3.H16VC
+   H16VCT2=LI.2.H16VC + LI.4.H16VC
+   H16VCTC=(H16VCT2-H16VCT1)
+   ABSH16VCTC=ABS(H16VCT2-H16VCT1)
+   if (H16VCT1>0) PRCH16VCTC=H16VCTC/H16VCT1
+   
+   ;H17 hour (5pm)  
+   H17VC1=LI.1.H17VC ;Volume on link in first input file
+   H17VC2=LI.2.H17VC ;Volume on link in second input file
+   H17VCC=(H17VC2-H17VC1) ;change in Volume between the two files
+   ABSH17VCC=ABS(H17VC2-H17VC1)
+   if (H17VC1>0) PRCH17VCC=H17VCC/H17VC1
+   
+   H17VCT1=LI.1.H17VC + LI.3.H17VC
+   H17VCT2=LI.2.H17VC + LI.4.H17VC
+   H17VCTC=(H17VCT2-H17VCT1)
+   ABSH17VCTC=ABS(H17VCT2-H17VCT1)
+   if (H17VCT1>0) PRCH17VCTC=H17VCTC/H17VCT1
+   
+   ;EV2 hours (6,7)  
+   EV2VC1=LI.1.EV2VC ;Volume on link in first input file
+   EV2VC2=LI.2.EV2VC ;Volume on link in second input file
+   EV2VCC=(EV2VC2-EV2VC1) ;change in Volume between the two files
+   ABSEV2VCC=ABS(EV2VC2-EV2VC1)
+   if (EV2VC1>0) PRCEV2VCC=EV2VCC/EV2VC1
+   
+   EV2VCT1=LI.1.EV2VC + LI.3.EV2VC
+   EV2VCT2=LI.2.EV2VC + LI.4.EV2VC
+   EV2VCTC=(EV2VCT2-EV2VCT1)
+   ABSEV2VCTC=ABS(EV2VCT2-EV2VCT1)
+   if (EV2VCT1>0) PRCEV2VCTC=EV2VCTC/EV2VCT1
+   
+   ;N11 hours (8pm-6am)  
+   N11VC1=LI.1.N11VC ;Volume on link in first input file
+   N11VC2=LI.2.N11VC ;Volume on link in second input file
+   N11VCC=(N11VC2-N11VC1) ;change in Volume between the two files
+   ABSN11VCC=ABS(N11VC2-N11VC1)
+   if (N11VC1>0) PRCN11VCC=N11VCC/N11VC1
+   
+   N11VCT1=LI.1.N11VC + LI.3.N11VC
+   N11VCT2=LI.2.N11VC + LI.4.N11VC
+   N11VCTC=(N11VCT2-N11VCT1)
+   ABSN11VCTC=ABS(N11VCT2-N11VCT1)
+   if (N11VCT1>0) PRCN11VCTC=N11VCTC/N11VCT1
+   
+ENDRUN
