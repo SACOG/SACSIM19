@@ -24,7 +24,7 @@ To use the tool in ArcGIS Pro, simply load the toolbox (TBX file) into an Arc GI
 ### From a python interpreter
 
 1. Open model_topline_summary.py 
-2. Edit the inputs accordingly (under the `__name__ == __main__` section of the script) and run the tool.
+2. Edit the inputs accordingly (under the `__name__ == __main__` section of the script).
 3. Comment out all lines that refer to the `arcpy` library
 
 ## quickAgg Tool Outputs
