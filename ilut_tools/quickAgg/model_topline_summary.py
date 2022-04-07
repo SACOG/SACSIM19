@@ -164,7 +164,7 @@ class modelRunSummary:
             "scenario_year": self.scenario_year, 
             "scenario_desc": self.scenario_desc,
             "tot_pop": tot_pop, 
-            "tot_vmt_fracmethod": tot_vmt_fracmethod,
+            "tot_vmt_ii": tot_vmt_fracmethod,
             "tot_restrips": tot_restrips, 
             "tot_resvmt_percap": vmt_cap_frac,
             "roadway_vmt": road_vmt, 
@@ -187,12 +187,13 @@ class modelRunSummary:
 if __name__ == '__main__':
     #=======================USER-DEFINED INPUT PARAMETERS=========================
 
+    # IF RUNNING TOOL FROM PYTHON INTERPRETER, COMMENT THESE VALUES OUT
     in_dir_root = arcpy.GetParameterAsText(0)  
     roadway_data_dbf = arcpy.GetParameterAsText(1)  
     sc_desc = arcpy.GetParameterAsText(2)  
 
 
-    # hard-coded values for testing
+    # UNCOMMENT AND UPDATE THESE VALUES TO RUN FROM PYTHON INTERPRETER
     # in_dir_root = r'\\win10-you\E\SACSIM19\amendment_1\2040_baseline\run_2040_MTIP_Amd1_Baseline_v1'  
     # roadway_data_dbf = '' 
     # sc_desc = 'Test run for year 2040, MTIP amendment 1 run'
@@ -206,4 +207,4 @@ if __name__ == '__main__':
     df = result[0]
     print(df)
 
-    arcpy.SetParameterAsText(3, result[1])
+    arcpy.SetParameterAsText(3, result[1]) # COMMENT OUT IF RUNNING FROM INTERPRETER
