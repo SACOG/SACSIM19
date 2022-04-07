@@ -137,6 +137,9 @@ class modelRunSummary:
         return (tot_vmt, tot_cvmt)
 
     def get_topline(self):
+        disclaimer_msg = "Numbers reported in this summary may vary from those reported bySACOG published documents." \
+            "\nEnd user assumes all risk associated with reporting numbers generated in this report."
+
         tot_pop = self.calc_hh_pop()
         tot_restrips = self.df_trip.shape[0]
         tot_vmt_fracmethod = self.calc_res_vmt_paxcnt(self.c_distau)
@@ -156,7 +159,8 @@ class modelRunSummary:
         # import pdb; pdb.set_trace()
         model_run_uncpath = build_unc_path(self.model_run_dir)
 
-        out_dict = {"model_run_folder": model_run_uncpath,
+        out_dict = {"DISCLAIMER": disclaimer_msg,
+            "model_run_folder": model_run_uncpath,
             "scenario_year": self.scenario_year, 
             "scenario_desc": self.scenario_desc,
             "tot_pop": tot_pop, 
@@ -183,9 +187,15 @@ class modelRunSummary:
 if __name__ == '__main__':
     #=======================USER-DEFINED INPUT PARAMETERS=========================
 
-    in_dir_root = arcpy.GetParameterAsText(0)  # input('Enter path to model run folder: ')  # r'D:\SACSIM19\TranHeadwaySensitivityTest\TranHeadway_plus20pct' # r'C:\SACSIM19\TransitTimefacTesting\MTP2020Am1_TFIncrease50pct' 
-    roadway_data_dbf = arcpy.GetParameterAsText(1)  # input('Enter roadway VMT DBF (aka "daynet" DBF): ')  #2016daynet_vmt.dbf
-    sc_desc = arcpy.GetParameterAsText(2)  # input('Enter description of the scenario: ')
+    in_dir_root = arcpy.GetParameterAsText(0)  
+    roadway_data_dbf = arcpy.GetParameterAsText(1)  
+    sc_desc = arcpy.GetParameterAsText(2)  
+
+
+    # hard-coded values for testing
+    # in_dir_root = r'\\win10-you\E\SACSIM19\amendment_1\2040_baseline\run_2040_MTIP_Amd1_Baseline_v1'  
+    # roadway_data_dbf = '' 
+    # sc_desc = 'Test run for year 2040, MTIP amendment 1 run'
 
     #=========================WRITE OUT TO CSV===========================
     date_suffix = str(datetime.date.today().strftime('%Y%m%d'))
