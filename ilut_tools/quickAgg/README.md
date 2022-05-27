@@ -17,11 +17,19 @@ But also requires:
 * `pandas`
 * `arcpy`, if running as an ArcGIS Pro toolbox
 
-### In ArcGIS Pro
+### Preparing Inputs
 
-To use the tool in ArcGIS Pro, simply load the toolbox (TBX file) into an Arc GIS Pro project, edit inputs accordingly, and run the tool.
+To generate the necessary inputs for the quickAgg tool you must:
 
-### From a python interpreter
+1. Complete a SACSIM model run
+2. After completing the run, execute the [attach-skims-to-trips script](https://github.com/SACOG/SACSIM19/tree/main/model_scripts/post_processing/attach_skims), which attaches skim distances to each trip in the trip table
+3. If you want to include total roadway VMT (instead of just resident-generated VMT) in the output table, create a daynet VMT table with one of the daynet [daily rollup scripts](https://github.com/SACOG/SACSIM19/tree/main/model_scripts/post_processing/Daily_Rollups).
+
+### Running  in ArcGIS Pro
+
+To use the tool in ArcGIS Pro, load the toolbox (TBX file) into an Arc GIS Pro project, edit inputs accordingly, and run the tool.
+
+### Running from a python interpreter
 
 1. Open model_topline_summary.py 
 2. Edit the inputs accordingly (under the `__name__ == __main__` section of the script).
