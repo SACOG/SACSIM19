@@ -17,6 +17,7 @@ import sys
 import time
 from pathlib import Path
 
+# import arcpy
 import pyodbc
 
 
@@ -26,7 +27,8 @@ class ILUTReport():
 
     def __init__(self, model_run_dir, dbname, envision_tomorrow_tbl=None, pop_table=None, 
                 taz_rad_tbl=None, master_pcl_tbl=None,
-                sc_yr=None, sc_code=None, av_tnc_type=None, sc_desc=None):
+                sc_yr=None, sc_code=None, av_tnc_type=None, sc_desc=None,
+                shared_ext=False):
         
         # ========parameters that are unlikely to change or are changed rarely======
         self.driver = '{SQL Server}'
@@ -62,9 +64,15 @@ class ILUTReport():
         
         
         # Autonomous Vehicle (AV) and TNC (e.g. Uber/Lyft) assumptions used:
-        self.avmode_dict = {1:["No AV, No TNC", self.triptour_sql_noAV, self.hh_sql_noAV],
-            2:["No AV, Yes TNC", self.triptour_sql_noAV, self.hh_sql_noAV],
-            3:["Both AV and TNC", self.triptour_sql_yesAV, self.hh_sql_yesAV]}
+        self.avtnc_nn = "No AV, No TNC"
+        self.avtnc_ny = "No AV, Yes TNC"
+        self.avtnc_yy = "Both AV and TNC"
+
+        self.avmode_dict = {
+            self.avtnc_nn:[self.triptour_sql_noAV, self.hh_sql_noAV],
+            self.avtnc_ny:[self.triptour_sql_noAV, self.hh_sql_noAV],
+            self.avtnc_yy:[self.triptour_sql_yesAV, self.hh_sql_yesAV]
+            }
         
         # model run folder
         self.model_run_dir = model_run_dir
@@ -102,9 +110,11 @@ class ILUTReport():
         if av_tnc_type:
             self.av_tnc_type = av_tnc_type
         else: 
-            self.av_tnc_type = input("Enter '1' ({}), '2' ({}), or '3' ({}): " \
-                            .format(self.avmode_dict[1][0], self.avmode_dict[2][0],
-                                    self.avmode_dict[3][0]))
+            user_tnc_entry = input(f"Enter '1' ('{self.avtnc_nn}'), '2' ('{self.avtnc_ny}'), " \
+                f"or '3' ('{self.avtnc_yy}'): ")
+            av_tnc_lookup = {'1':self.avtnc_nn, '2':self.avtnc_ny, '3':self.avtnc_yy}
+
+            self.av_tnc_type = av_tnc_lookup[user_tnc_entry]
                 
         # additional scenario description
         if sc_desc:
@@ -112,8 +122,11 @@ class ILUTReport():
         else:
             self.sc_desc = input("Enter scenario description (255 char limit): ") 
         
-        self.av_tnc_type = int(self.av_tnc_type)
+        # self.av_tnc_type = int(self.av_tnc_type)
         self.scenario_extn = "{}_{}".format(self.sc_yr, self.sc_code)
+
+        # 1/0 flag indicator if run is shared externally (e.g. for EIR, MTP, MTIP amendment, etc.)
+        self.shared_ext = int(shared_ext) # convert True/False to 1/0 value
         
 
     def check_if_table_exists(self, table_name):
@@ -122,6 +135,41 @@ class ILUTReport():
         cursor = conn.cursor()
         tables = [i.table_name for i in cursor.tables()]
         return table_name in tables
+
+    def shared_externally(self):
+        '''
+        Checks if the indicated year and scenario ID correspond to an existing run that was
+        shared publicly (e.g. MTIP, MTP, EIR run). If it is shared, do not let the user overwrite
+        the table.
+        '''
+        
+        conn = pyodbc.connect(self.conxn_info)
+        conn.autocommit = True
+        cursor = conn.cursor()
+        
+        sql = f"""
+            SELECT * FROM {self.scen_log_tbl}
+            WHERE scenario_year = {self.sc_yr}
+                AND scenario_code = {self.sc_code}
+                AND table_status = 'created'
+            """
+        
+        cursor.execute(sql)
+        results = cursor.fetchall()
+
+        if len(results) > 0:
+            fields = [i[0] for i in cursor.description]
+            record = dict(zip(fields, results[0]))
+            share_flag = record['shared_externally']
+
+            output = True if share_flag == 1 else False
+        else:
+            output = False
+
+        cursor.close()
+        conn.close()       
+
+        return output
     
     
     def run_sql(self, sql_file, params_list):
@@ -174,7 +222,8 @@ class ILUTReport():
         sql = f"""
             INSERT INTO {self.scen_log_tbl} VALUES (
             {self.sc_yr}, {self.sc_code}, '{sc_desc_fmt}', GETDATE(), 
-            '{av_tnc_flag}', '{default_tbl_status}', '{run_folder}')
+            '{av_tnc_flag}', '{default_tbl_status}', '{run_folder}',
+            {self.shared_ext})
             """
         
         cursor.execute(sql)
@@ -198,12 +247,28 @@ class ILUTReport():
                 continue
         
         return tbl_name
+
+    def delete_tables(self, tables_to_delete):
+        conn = pyodbc.connect(self.conxn_info)
+        conn.autocommit = True
+
+        for table in tables_to_delete:
+            cursor = conn.cursor()
+
+            sql = f"DROP TABLE {table}"
+            cursor.execute(sql)
+
+            cursor.commit()
+            cursor.close()
+
+        conn.close()
     
-    def run_report(self, create_triptour_table = True,
-                    create_person_table = True,
-                    create_hh_table = True,
-                    create_cvixxi_table = True,
-                    create_comb_table = True):
+    def run_report(self, create_triptour_table=True,
+                    create_person_table=True,
+                    create_hh_table=True,
+                    create_cvixxi_table=True,
+                    create_comb_table=True,
+                    delete_input_tables=False):
         
         '''Runs queries to generate parcel-level ILUT table.'''
         
@@ -230,7 +295,7 @@ class ILUTReport():
         
         # create trip-tour theme table
         if create_triptour_table:
-            triptour_sql = self.avmode_dict[self.av_tnc_type][1]
+            triptour_sql = self.avmode_dict[self.av_tnc_type][0]
             triptour_params = [raw_trip, raw_tour, raw_hh, raw_person, raw_parcel, 
                                raw_ixworkerfraxn, triptour_outtbl]
             self.run_sql(triptour_sql,triptour_params) 
@@ -242,7 +307,7 @@ class ILUTReport():
         
         #create hh theme table
         if create_hh_table:
-            hh_sql = self.avmode_dict[self.av_tnc_type][2]
+            hh_sql = self.avmode_dict[self.av_tnc_type][1]
             hh_params = [self.pop_table, raw_hh, raw_parcel,hh_outtbl]
             self.run_sql(hh_sql,hh_params)
             
@@ -268,11 +333,16 @@ class ILUTReport():
                 self.run_sql(self.mix_density_sql2,[raw_parcel]) #calculate mixed-density column on parcel file
                 self.run_sql(self.comb_sql, comb_params) #run script to combine all theme tables
                 
-                av_tnc_desc = self.avmode_dict[self.av_tnc_type][0]
-                self.log_run(av_tnc_desc)
+                # av_tnc_desc = self.avmode_dict[self.av_tnc_type][0]
+                self.log_run(self.av_tnc_type)
             else:
                 print("Not all input ILUT tables exist. Make sure all theme ILUT tables exist then re-run.")
                 sys.exit()
+
+            if delete_input_tables:
+                input_tables = [raw_parcel, raw_hh, raw_person, raw_ixxi, 
+                                raw_cveh, raw_ixworkerfraxn, raw_tour, raw_trip]
+                self.delete_tables(input_tables)
         
         cursor.close()
         conn.close()
@@ -287,10 +357,14 @@ if __name__ == '__main__':
         dbname='MTP2024', envision_tomorrow_tbl='raw_eto2016_latest', pop_table='raw_Pop2016_latest', sc_yr=2016,
                  sc_code=999, av_tnc_type=1, 
                  sc_desc='testing')
-    report_obj.run_report(create_triptour_table = False,
-                    create_person_table = False,
-                    create_hh_table = False,
-                    create_cvixxi_table = True,
-                    create_comb_table = False)
+
+    check_if_exists = report_obj.shared_externally()
+    print(check_if_exists)
+
+    # report_obj.run_report(create_triptour_table = False,
+    #                 create_person_table = False,
+    #                 create_hh_table = False,
+    #                 create_cvixxi_table = True,
+    #                 create_comb_table = False)
 
 

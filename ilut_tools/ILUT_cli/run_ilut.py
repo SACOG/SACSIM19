@@ -8,6 +8,7 @@ import os
 import csv
 
 from dbfread import DBF
+# import arcpy
  
 from bcp_loader import BCP # bcp_loader script must be in same folder as this script to import it
 from MakeCombinedILUT import ILUTReport
@@ -44,14 +45,15 @@ def dat_to_csv(dat_in, out_csv, dat_delim):
 if __name__ == '__main__':
     
     #===============PARAMETERS SET AT EACH RUN========================
-    print("Welcome to the SACSIM Integrated Land Use Transportation (ILUT) processor.\n" \
-          "To run the ILUT process, please follow the prompts below:\n")
+    # print("Welcome to the SACSIM Integrated Land Use Transportation (ILUT) processor.\n" \
+    #       "To run the ILUT process, please follow the prompts below:\n")
     
     model_run_folder = input("Enter model run folder path: ")# r'D:\SACSIM19\MTP2020\Conformity_Runs\run_2035_MTIP_Amd1_Baseline_v1'
     scenario_year = int(input("Enter scenario year: ")) # 2035
     scenario_id = int(input("Enter scenario ID number: ")) # 999
-    run_ilut_combine = input("Do you want to run ILUT Combine script after loading tables (y/n)? ")
-        
+    run_ilut_combine = input("Do you want to run ILUT Combine script after loading tables (enter 'true' or 'false')? ")
+    remove_input_tables = input("Do you want to remove raw input tables after creating final combined ILUT table (enter 'true' or 'false')? ")
+    shared_externally = input("Will this run be shared externally (enter 'true' or 'false')? ") # boolean; indicate if the run is shared externally and needs to be saved/archived (e.g. MTIP amendment, MTP run)
 
     #=============SELDOM-CHANGED PARAMETERS==========================
     # folder containing query files used to create tables
@@ -59,7 +61,7 @@ if __name__ == '__main__':
     query_dir = os.path.abspath("sql_bcp") # subfolder with sql scripts
     
     sql_server_name = 'SQL-SVR'
-    ilut_db_name = 'MTP2020' # 'MTP2020'
+    ilut_db_name = 'MTP2020' # 'MTP2024'
     
     # in table names, base year and earlier is usually written as 4-digit year, while for future years its
     # writted as "pa<two-digit year"
@@ -76,8 +78,15 @@ if __name__ == '__main__':
     load_cveh_taztbl = True
     load_ixxi_taztbl = True
 
+    # convert ESRI "true"/"false" string to python booleans
+    tf_dict = {'true':True, 'false':False}
+
+    run_ilut_combine = tf_dict[run_ilut_combine.lower()]
+    remove_input_tables = tf_dict[remove_input_tables.lower()]
+    shared_externally = tf_dict[shared_externally.lower()]
+
     # master parcel table and TAZ table
-    taz_tbl = "TAZ07_RAD07"
+    taz_tbl = "TAZ07_RAD07"  # "TAZ21_RAD07"
     master_parcel_table = "PARCEL_MASTER"
     
     # population tables
@@ -165,12 +174,18 @@ if __name__ == '__main__':
     # the ILUT aggregation once the tables have loaded. By having this here, before the loading,
     # the user can have a "one and done" process, just setting parameters once, hitting "go",
     # and having the full ILUT process happen for them.
-    if run_ilut_combine.lower() == 'y':
+    if run_ilut_combine:
         eto_tbl = env_tmrw_yr_dict[scenario_year]
         popn_tbl = pop_yr_dict[scenario_year]
         comb_rpt = ILUTReport(model_run_dir=model_run_folder, dbname=ilut_db_name, sc_yr=scenario_year, 
                               sc_code=scenario_id, envision_tomorrow_tbl=eto_tbl,
-                              pop_table=popn_tbl, taz_rad_tbl=taz_tbl, master_pcl_tbl=master_parcel_table)
+                              pop_table=popn_tbl, taz_rad_tbl=taz_tbl, master_pcl_tbl=master_parcel_table,
+                              av_tnc_type=None, sc_desc=None, shared_ext=shared_externally)
+
+        if comb_rpt.shared_externally():
+            raise Exception(f"An ILUT table for year {scenario_year} and scenario ID {scenario_id} already exists in SQL Server " \
+                "and has been shared externally. Please consult the ilut_scenario_log table to choose a "\
+                " different scenario ID.")
     else:
         pass
         print("Loading model output tables but will NOT run ILUT combination process...\n")
@@ -179,7 +194,7 @@ if __name__ == '__main__':
     os.chdir(model_run_folder)
     
     tbl_loader = BCP(svr_name=sql_server_name, db_name=ilut_db_name)
-    
+   
     for tblspec in ilut_tbl_specs:
         if tblspec[k_load_tbl]:
             sql_tname = f"{tblspec[k_sql_tbl_name]}{scenario_year}_{scenario_id}"
@@ -197,11 +212,11 @@ if __name__ == '__main__':
         else:
             print(f"Skipping loading of {tblspec[k_sql_tbl_name]} table...")
             continue
-        
+
     print("All tables successfully loaded!\n")
     
-    if run_ilut_combine.lower() == 'y':
+    if run_ilut_combine:
         print("Starting ILUT combining/aggregation process...\n")
-        comb_rpt.run_report()
+        comb_rpt.run_report(delete_input_tables=remove_input_tables)
     
 
