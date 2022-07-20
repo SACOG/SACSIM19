@@ -161,9 +161,9 @@ LOOP p=1,9
 	  
 	  ; Previous volume and time
 	  if (li.2.capclass <> 99 & li.1.capclass <>99)
-		  prevvol  = v_1
-		  prevtime = time_1
-		  precspd = cspd_1
+		  prevvol  = li.1.v_1
+		  prevtime = li.1.time_1
+		  precspd = li.1.cspd_1
 	  
 	  elseif(li.2.capclass <> 99)
 	  ;from base
@@ -171,7 +171,7 @@ LOOP p=1,9
 		  precspd = li.2.speed
 		  prevtime = 60*li.2.distance/li.2.speed ;set free-flow time
 		  
-      elseif ((capclass=0,7,99) || speed=0)   ;walk, bike only, or switched-off link
+      elseif ((li.1.capclass=0,7,99) || li.1.speed=0)   ;walk, bike only, or switched-off link
 		spdcurv=0
 		prevvol=0
 		precspd=0
