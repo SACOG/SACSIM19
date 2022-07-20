@@ -1,3 +1,20 @@
+/*
+SACSIM19 Assignment-Only script.
+Purpose: Holding land use and trip table constant, this script assigns trips to the SACSIM network.
+	In starting the assignment, it takes the volumes and travel times from the final loaded
+	output networks (vo.<per>.net files) from the parent SACSIM full model run.
+	
+INSTRUCTIONS:
+1) Within the completed full model run folder, create a subfolder, name is not important.
+2) Put the following into the subfolder:
+	-This script
+	-Copy of the base network from the parent model run folder 
+3) Make changes on the copied base network if desired (e.g., to reflect implementation of transportation project)
+4) Run this script from inside the subfolder.
+
+
+*/
+
 ;Based on Full SacSIM19 Script
 ;Assignment Only using last toll facility pricing costs. -Kyle Shipley
 ; 	-to adjust toll costs, must update at link level or use assignment script with toll optimization loop.
