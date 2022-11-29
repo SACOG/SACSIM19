@@ -1,0 +1,10 @@
+agency,route_file,trip_file,stop_time_file,calendar_file,stops_file,shapes_file
+ETran,routes2.csv,trips.txt,stop_times.txt,calendar.txt,stops.txt,shapes.txt
+SRTD,routes2.csv,trips2.csv,stop_times2.csv,calendar.txt,stops.txt,shapes.txt
+Roseville,routes.txt,trips.txt,stop_times2.csv,calendar.txt,stops.txt,shapes.txt
+FSL,routes.txt,trips.txt,stop_times.txt,calendar2.csv,stops.txt,shapes.txt
+Unitrans,routes.txt,trips.txt,stop_times.txt,calendar2.csv,stops.txt,shapes.txt
+YubaSutter,routes2.csv,trips2.csv,stop_times.txt,calendar2.csv,stops.txt,shapes.txt
+YoloBus,routes2.csv,trips3.csv,stop_times3.csv,calendar2.csv,stops.txt,shapes2.csv
+ElDorado,routes3.csv,trips3.csv,stop_times2.csv,calendar.txt,stops2.csv,shapes.txt
+PCT,routes.txt,trips.txt,stop_times2.csv,calendar.txt,stops.txt,shapes.txt
