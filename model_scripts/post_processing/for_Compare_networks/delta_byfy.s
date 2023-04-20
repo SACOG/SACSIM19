@@ -64,7 +64,7 @@ fycongmapvol=0
 bycongmapcode=0
 fycongmapcode=0
 bycvmt_p=0
-bycvmt_p=0
+fycvmt_p=0
 fybydyv_p=0
 fybylanes=0
 proj=0
@@ -132,7 +132,7 @@ if(bydvmt>0)
    bycvmt_p=bydcvmt/bydvmt
 endif
 if(fydvmt>0)
-   bycvmt_p=fydcvmt/fydvmt
+   fycvmt_p=fydcvmt/fydvmt
 endif
 if(bydyv>0)
    fybydyv_p=fydyv/bydyv
