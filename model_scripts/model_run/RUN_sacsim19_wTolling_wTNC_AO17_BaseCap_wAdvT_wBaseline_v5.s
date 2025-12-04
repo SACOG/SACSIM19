@@ -3624,7 +3624,7 @@ endrun
 		if (li.USECLASS == 0) ADDTOGROUP=1        ;GENERAL PURPOSE 
 		if (li.USECLASS == 2) ADDTOGROUP=2        ;HOV2+
 		if (li.USECLASS == 3) ADDTOGROUP=3        ;HOV3+
-		if (li.USECLASS == 4) ADDTOGROUP=4        ;HOV3+
+		if (li.USECLASS == 4) ADDTOGROUP=4        ;CV+
 				
 		  if (li.speed = 0) 
 			  ADDTOGROUP=1
